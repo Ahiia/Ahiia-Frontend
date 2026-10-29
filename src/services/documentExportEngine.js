@@ -5,6 +5,23 @@
 async function preloadLogo(url) {
   if (!url || typeof window === "undefined") return null;
   if (url.startsWith("data:image/")) return url;
+
+  // Try fetching as Blob first to bypass canvas tainting
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (res.ok) {
+      const blob = await res.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch (err) {
+    // Fall back to Image element
+  }
+
   try {
     return await new Promise((resolve) => {
       const img = new Image();
@@ -22,6 +39,7 @@ async function preloadLogo(url) {
         }
       };
       img.onerror = () => resolve(null);
+      setTimeout(() => resolve(null), 3000);
       img.src = url;
     });
   } catch {

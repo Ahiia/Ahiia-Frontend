@@ -909,6 +909,65 @@ const DocumentWorkspace = () => {
     logoUrl: "",
   });
 
+    const logoFileInputRef = useRef(null);
+  const [isEditingTagline, setIsEditingTagline] = useState(false);
+  const [editableTagline, setEditableTagline] = useState("");
+
+  // Direct logo upload right from the document workspace
+  const handleDirectLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      toast.info("Uploading company logo...");
+      const uploadedUrl = await uploadImageToCloudinary(file);
+      if (uploadedUrl) {
+        setCompanyProfile((prev) => ({ ...prev, logoUrl: uploadedUrl }));
+        setBrandKit((prev) => ({ ...prev, logoUrl: uploadedUrl }));
+        try {
+          localStorage.setItem("ahiia_active_logo", uploadedUrl);
+        } catch {}
+
+        try {
+          await updateBusinessContext({ logoUrl: uploadedUrl });
+        } catch {}
+        try {
+          await updateBrandKit({ logoUrl: uploadedUrl });
+        } catch {}
+
+        window.dispatchEvent(
+          new CustomEvent("ahiia:profile-updated", {
+            detail: { logoUrl: uploadedUrl },
+          })
+        );
+        toast.success("Logo applied to your document!");
+      }
+    } catch (err) {
+      console.error("Direct logo upload error:", err);
+      toast.error("Failed to upload logo. Please try again.");
+    } finally {
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Inline tagline saving directly from the document header
+  const handleSaveTagline = async (newTagline) => {
+    const trimmed = (newTagline || "").trim();
+    setBrandKit((prev) => ({ ...prev, tagline: trimmed }));
+    try {
+      localStorage.setItem("ahiia_brand_tagline", trimmed);
+    } catch {}
+    try {
+      await updateBrandKit({ tagline: trimmed });
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("ahiia:profile-updated", {
+        detail: { tagline: trimmed },
+      })
+    );
+    toast.success("Tagline updated!");
+    setIsEditingTagline(false);
+  };
+  
   const styleMenuRef = useRef(null);
 
   // Close Style Menu on outside click
@@ -4005,31 +4064,82 @@ const DocumentWorkspace = () => {
               <>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {activeLogo ? (
-                      <img
-                        src={activeLogo}
-                        alt={companyProfile.companyName || "Logo"}
-                        className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
-                      />
-                    ) : (<div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0"
+                    {/* Interactive Click-to-Upload Logo Badge */}
+                    <div
+                      onClick={() => logoFileInputRef.current?.click()}
+                      title="Click to upload or change logo"
+                      className="relative group cursor-pointer shrink-0"
+                    >
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={companyProfile.companyName || "Logo"}
+                          className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200 group-hover:border-blue-400 transition-all"
+                        />
+                      ) : (
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0 group-hover:opacity-90 transition-all"
                           style={{
                             backgroundColor: brandKit.secondaryColor || "#2563EB",
                           }}
                         >
                           {companyInitials}
-                        </div>)}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
+                        📷
+                      </div>
+                    </div>
+
                     <div>
                       <h2 className="text-sm font-extrabold text-slate-900 leading-tight">
-                        {companyProfile.companyName}
+                        {companyProfile.companyName || "Your Company"}
                       </h2>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
-                      </p>
+
+                      {/* Inline Editable Tagline */}
+                      {isEditingTagline ? (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editableTagline}
+                            onChange={(e) => setEditableTagline(e.target.value)}
+                            onBlur={() => handleSaveTagline(editableTagline)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveTagline(editableTagline);
+                              if (e.key === "Escape") setIsEditingTagline(false);
+                            }}
+                            placeholder="Enter tagline..."
+                            className="text-xs px-2 py-0.5 rounded-md border border-blue-400 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[280px]"
+                          />
+                        </div>
+                      ) : (
+                        <p
+                          onClick={() => {
+                            setEditableTagline(
+                              brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline)
+                                ? brandKit.tagline
+                                : ""
+                            );
+                            setIsEditingTagline(true);
+                          }}
+                          title="Click to edit tagline"
+                          className="text-xs text-slate-400 mt-0.5 hover:text-blue-600 hover:underline cursor-pointer flex items-center gap-1 group"
+                        >
+                          <span>
+                            {(brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline)
+                              ? brandKit.tagline
+                              : "") || "Click to add tagline..."}
+                          </span>
+                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-500 font-semibold transition-opacity">
+                            ✎ Edit
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-slate-400 tracking-wide">
-                    Business Proposal
+                    {navState.docType || docData?.documentType || "Business Proposal"}
                   </span>
                 </div>
 

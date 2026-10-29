@@ -789,6 +789,9 @@ const Onboarding = () => {
     try {
       const theLogoUrl = await uploadImageToCloudinary(file);
       setLogoUrl(theLogoUrl);
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("ahiia_active_logo", theLogoUrl); } catch {}
+      }
       toast.success("Logo attached");
     } catch (error) {
       console.log(error);

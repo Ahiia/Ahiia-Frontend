@@ -406,13 +406,36 @@ const ExportModal = ({
       // Generates the real document content, structure, styling, and branding.
       // NEVER touches window.print() or captures any UI elements!
       if (!backendExportSucceeded) {
+        const resolvedActiveLogo =
+          brandKit?.logoUrl ||
+          companyProfile?.logoUrl ||
+          (typeof window !== "undefined"
+            ? localStorage.getItem("ahiia_active_logo")
+            : "") ||
+          "";
+
+        const resolvedActiveTagline =
+          (brandKit?.tagline && !/clean\s+power/i.test(brandKit.tagline)
+            ? brandKit.tagline
+            : "") ||
+          (typeof window !== "undefined"
+            ? localStorage.getItem("ahiia_brand_tagline")
+            : "") ||
+          "";
+
         const payload = {
           documentTitle,
           documentType: displayDocType,
           styleTemplate: selectedStyle,
-          brandKit,
+          brandKit: {
+            ...brandKit,
+            logoUrl: resolvedActiveLogo,
+            tagline: resolvedActiveTagline,
+          },
           companyProfile: {
             companyName: companyProfile.companyName || companyName,
+            logoUrl: resolvedActiveLogo,
+            preparedFor: companyProfile.preparedFor || "The Client",
             ...companyProfile,
           },
           sections: Array.isArray(sections) && sections.length > 0 ? sections : [
