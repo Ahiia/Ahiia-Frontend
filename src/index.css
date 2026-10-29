@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Document workspace: skeleton -> generated content swap.
+   Opacity-only so nothing moves (no layout shift). */
+@keyframes docFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.doc-fade-in {
+  animation: docFadeIn 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-fade-in { animation: none; }
+}
+
+/* Polling queue: smooth indeterminate progress bar */
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-indeterminate {
+  animation: indeterminate 2s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+
