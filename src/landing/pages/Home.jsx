@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight, Play, Check, Sparkles, Loader2 } from "lucide-react";
 import FeaturesSection from "../components/FeaturesSection";
 import AhiiaWorkspace from "../components/AhiiaWorkspace";
@@ -248,8 +249,8 @@ const Home = () => {
 
             <Reveal show={mounted} delay={260}>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                <a
-                  href="#get-started"
+                <Link
+                  to="/signup"
                   className="group inline-flex items-center gap-2 rounded-full bg-indigo-500 hover:bg-indigo-400 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_0_6px_rgba(99,102,241,0.15)] w-full sm:w-auto justify-center"
                 >
                   Get Started
@@ -257,7 +258,7 @@ const Home = () => {
                     size={16}
                     className="transition-transform duration-200 group-hover:translate-x-0.5"
                   />
-                </a>
+                </Link>
                 <a
                   href="#how-it-works"
                   onClick={(e) => {
