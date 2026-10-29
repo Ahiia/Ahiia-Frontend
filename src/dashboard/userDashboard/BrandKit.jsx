@@ -44,12 +44,12 @@ const initials = (name) =>
 
 const BrandKit = () => {
   const [companyName, setCompanyName] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("ahiia_active_logo") || "" : ""));
   const [logoName, setLogoName] = useState("brand-logo.svg");
   const [primaryColor, setPrimaryColor] = useState("#2563EB");
   const [secondaryColor, setSecondaryColor] = useState("#131C52");
   const [font, setFont] = useState("Montserrat");
-  const [tagline, setTagline] = useState("Clean power, built to last");
+  const [tagline, setTagline] = useState("");
   const [socialLinks, setSocialLinks] = useState([
     { platform: "LinkedIn", url: "" },
   ]);
@@ -71,7 +71,10 @@ const BrandKit = () => {
             if (data.primaryColor) setPrimaryColor(data.primaryColor);
             if (data.secondaryColor) setSecondaryColor(data.secondaryColor);
             if (data.font) setFont(data.font);
-            if (data.tagline) setTagline(data.tagline);
+            if (data.tagline) {
+              const isSolarTag = /clean\s+power/i.test(data.tagline);
+              setTagline(isSolarTag ? "" : data.tagline);
+            }
             if (data.logoUrl) {
               setLogoUrl(data.logoUrl);
               const parts = data.logoUrl.split("/");
@@ -138,6 +141,7 @@ const BrandKit = () => {
       try {
         const url = await uploadImageToCloudinary(file);
         setLogoUrl(url);
+      try { localStorage.setItem("ahiia_active_logo", url); } catch {}
         markDirty();
         // Automatically persist logo to Brand Kit on the server
         try {
@@ -447,7 +451,7 @@ const BrandKit = () => {
                   setTagline(e.target.value);
                   markDirty();
                 }}
-                placeholder="e.g. Clean power, built to last"
+                placeholder="e.g. Luxury hospitality, comfort and world-class service"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#131B4D]/15 focus:border-[#131B4D]/40 transition-shadow"
               />
             </div>

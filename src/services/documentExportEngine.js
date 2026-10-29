@@ -1,3 +1,34 @@
+
+/**
+ * Safely preloads an image URL into a base64 Data URL for jsPDF embedding
+ */
+async function preloadLogo(url) {
+  if (!url || typeof window === "undefined") return null;
+  if (url.startsWith("data:image/")) return url;
+  try {
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } catch {
+          resolve(img);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } catch {
+    return null;
+  }
+}
+
 import { jsPDF } from "jspdf";
 import pptxgen from "pptxgenjs";
 import {
@@ -726,7 +757,7 @@ export async function exportToPdf({
       ? companyProfile.preparedFor.toLowerCase().includes("client")
         ? companyProfile.preparedFor
         : `${companyProfile.preparedFor} ("the Client")`
-      : 'Lagos SME Partners Ltd. ("the Client")';
+      : 'The Client ("the Client")';
     const providerText = companyProfile.companyName
       ? companyProfile.companyName.toLowerCase().includes("provider")
         ? companyProfile.companyName
@@ -797,7 +828,7 @@ export async function exportToPdf({
       ? companyProfile.preparedFor.toLowerCase().includes("client")
         ? companyProfile.preparedFor
         : `${companyProfile.preparedFor} ("the Client")`
-      : 'Lagos SME Partners Ltd. ("the Client")';
+      : 'The Client ("the Client")';
     const providerText = companyProfile.companyName
       ? companyProfile.companyName.toLowerCase().includes("provider")
         ? companyProfile.companyName
@@ -1376,7 +1407,7 @@ export async function exportToPdf({
       doc.setFontSize(9);
       doc.setTextColor(15, 23, 42);
       doc.text(
-        companyProfile.preparedFor || "Lagos SME Partners Ltd.",
+        companyProfile.preparedFor || "The Client",
         margin,
         cursorY
       );
@@ -1434,7 +1465,7 @@ export async function exportToPdf({
     doc.setFontSize(9);
     doc.setTextColor(15, 23, 42);
     doc.text(
-      companyProfile.preparedFor || "Lagos SME Partners Ltd.",
+      companyProfile.preparedFor || "The Client",
       margin,
       cursorY
     );
@@ -2409,7 +2440,7 @@ export async function exportToDocx({
           text: isMarketingPlan
             ? `Prepared for: ${companyProfile.preparedFor || "Commercial team"}   |   Prepared by: ${companyProfile.preparedBy || companyProfile.companyName || "Your Company"}`
             : isContract
-              ? `Between: ${companyProfile.preparedFor || "Lagos SME Partners Ltd."} ("the Client")   |   And: ${companyProfile.companyName || "Your Company"} ("the Provider")`
+              ? `Between: ${companyProfile.preparedFor || "The Client"} ("the Client")   |   And: ${companyProfile.companyName || "Your Company"} ("the Provider")`
               : `Prepared for: ${companyProfile.preparedFor || "Client"}   |   Date: ${new Date().toLocaleDateString()}`,
           color: "64748B",
           size: 18,
@@ -2701,7 +2732,7 @@ export async function exportToDocx({
                         size: 18,
                       }),
                       new TextRun({
-                        text: companyProfile.preparedFor || "Lagos SME Partners Ltd.\n",
+                        text: companyProfile.preparedFor || "The Client\n",
                         bold: true,
                         color: "0F172A",
                         size: 20,

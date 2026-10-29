@@ -1604,7 +1604,7 @@ const Onboarding = () => {
                       type="text"
                       value={tagline}
                       onChange={(e) => setTagline(e.target.value)}
-                      placeholder="e.g. Clean power, built to last"
+                      placeholder="e.g. Elevating standards, creating memorable experiences"
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                     />
                   </div>

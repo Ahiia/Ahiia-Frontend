@@ -793,6 +793,48 @@ const QUICK_ACTIONS = [
   "Regenerate section",
 ];
 
+
+// Heuristically extracts the target client name or "Prepared for" from document content / sections
+function extractClientFromContent(sectionsOrContent) {
+  if (!sectionsOrContent) return "";
+  let fullText = "";
+  if (typeof sectionsOrContent === "string") {
+    fullText = sectionsOrContent;
+  } else if (Array.isArray(sectionsOrContent)) {
+    fullText = sectionsOrContent
+      .map((s) => `${s.title || ""} ${s.body || s.content || ""} ${(s.paragraphs || []).join(" ")}`)
+      .join("\n");
+  } else if (typeof sectionsOrContent === "object") {
+    fullText = Object.values(sectionsOrContent)
+      .map((v) => (typeof v === "string" ? v : JSON.stringify(v)))
+      .join("\n");
+  }
+
+  // 1. Match direct indicators: "Prepared for: X", "Client: X", "For the Client: X"
+  const preparedForMatch = fullText.match(
+    /(?:prepared\s+(?:for|to)|presented\s+to|submitted\s+to|client\s*(?:name)?|for\s+the\s+client)\s*[:\-–]\s*([^\n\r,;]+)/i
+  );
+  if (preparedForMatch && preparedForMatch[1]) {
+    const candidate = preparedForMatch[1].replace(/["'“”]/g, "").trim();
+    if (candidate && !/^(the client|client|—|-|na|n\/a)$/i.test(candidate) && candidate.length < 60) {
+      return candidate;
+    }
+  }
+
+  // 2. Match transaction indicators: "Proposed acquisition by Marriott Bonvoy of...", "Investment by X"
+  const acqMatch = fullText.match(
+    /(?:proposed\s+acquisition\s+by|investment\s+by|partnership\s+with|engagement\s+with|proposal\s+for)\s+([A-Z0-9][A-Za-z0-9\s&]+?)(?:\s+of\b|\s+for\b|\s+in\b|\s+to\b|[,\.\n])/i
+  );
+  if (acqMatch && acqMatch[1]) {
+    const candidate = acqMatch[1].replace(/["'“”]/g, "").trim();
+    if (candidate && candidate.length > 2 && candidate.length < 60 && !/^(the|a|an)$/i.test(candidate)) {
+      return candidate;
+    }
+  }
+
+  return "";
+}
+
 const DocumentWorkspace = () => {
   const { documentId } = useParams();
   const navigate = useNavigate();
@@ -1205,7 +1247,7 @@ const DocumentWorkspace = () => {
                 font: prev.font || "Montserrat",
                 primaryColor: prev.primaryColor || "#0F172A",
                 secondaryColor: prev.secondaryColor || "#2563EB",
-                tagline: prev.tagline || "Clean power, built to last",
+                tagline: prev.tagline || "",
               }));
               lastSavedSnapshotRef.current = JSON.stringify({
                 sections: DEFAULT_PITCH_DECK_SECTIONS,
@@ -1233,7 +1275,7 @@ const DocumentWorkspace = () => {
                 font: prev.font || "Montserrat",
                 primaryColor: prev.primaryColor || "#0F172A",
                 secondaryColor: prev.secondaryColor || "#2563EB",
-                tagline: prev.tagline || "Clean power, built to last",
+                tagline: prev.tagline || "",
               }));
               lastSavedSnapshotRef.current = JSON.stringify({
                 sections: DEFAULT_MARKETING_PLAN_SECTIONS,
@@ -1252,7 +1294,7 @@ const DocumentWorkspace = () => {
               setCompanyProfile((prev) => ({
                 ...prev,
                 companyName: prev.companyName || "SolarTech Nigeria",
-                preparedFor: prev.preparedFor || 'Lagos SME Partners Ltd. ("the Client")',
+                preparedFor: prev.preparedFor || "The Client",
                 preparedBy: prev.preparedBy || 'SolarTech Nigeria ("the Provider")',
               }));
               setBrandKit((prev) => ({
@@ -1261,7 +1303,7 @@ const DocumentWorkspace = () => {
                 font: prev.font || "Montserrat",
                 primaryColor: prev.primaryColor || "#0F172A",
                 secondaryColor: prev.secondaryColor || "#2563EB",
-                tagline: prev.tagline || "Clean power, built to last",
+                tagline: prev.tagline || "",
               }));
               lastSavedSnapshotRef.current = JSON.stringify({
                 sections: DEFAULT_CONTRACT_SECTIONS,
@@ -1328,7 +1370,7 @@ const DocumentWorkspace = () => {
               font: b.font || prev.font,
               primaryColor: b.primaryColor || prev.primaryColor,
               secondaryColor: b.secondaryColor || prev.secondaryColor,
-              tagline: b.tagline || prev.tagline,
+              tagline: b.tagline && !/clean\s+power/i.test(b.tagline) ? b.tagline : "",
               logoUrl: b.logoUrl || prev.logoUrl,
               configured: true,
             }));
@@ -1370,7 +1412,7 @@ const DocumentWorkspace = () => {
           ...prev,
           primaryColor: data.primaryColor || prev.primaryColor,
           secondaryColor: data.secondaryColor || prev.secondaryColor,
-          tagline: data.tagline !== undefined ? data.tagline : prev.tagline,
+          tagline: data.tagline !== undefined ? (/clean\s+power/i.test(data.tagline) ? "" : data.tagline) : prev.tagline,
           font: data.font || prev.font,
           logoUrl: data.logoUrl || prev.logoUrl,
         }));
@@ -1926,7 +1968,7 @@ const DocumentWorkspace = () => {
     .slice(0, 2)
     .toUpperCase() || "CO";
 
-  const activeLogo = brandKit.logoUrl || companyProfile.logoUrl || "";
+  const activeLogo = brandKit.logoUrl || companyProfile.logoUrl || (typeof window !== "undefined" ? localStorage.getItem("ahiia_active_logo") || "" : "") || "";
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
 
@@ -2675,7 +2717,7 @@ const DocumentWorkspace = () => {
                           {companyProfile.companyName || "Your Company"}
                         </h2>
                         <p className="text-xs text-blue-200/80 font-medium">
-                          {brandKit.tagline || ""}
+                          {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                         </p>
                       </div>
                     </div>
@@ -2729,7 +2771,7 @@ const DocumentWorkspace = () => {
                     {/* Footer */}
                     <div className="border-t border-slate-100 pt-4 flex items-center justify-between text-xs text-slate-400 font-normal mt-auto">
                       <span>
-                        {companyProfile.companyName || "Your Company"} • {brandKit.tagline || ""}
+                        {companyProfile.companyName || "Your Company"} • {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                       </span>
                       <span>
                         {safeSlideIndex + 1} / {sections.length}
@@ -2758,7 +2800,7 @@ const DocumentWorkspace = () => {
                           {companyProfile.companyName || "Your Company"}
                         </h2>
                         <p className="text-xs text-slate-500 font-medium">
-                          {brandKit.tagline || ""}
+                          {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                         </p>
                       </div>
                     </div>
@@ -3261,7 +3303,7 @@ const DocumentWorkspace = () => {
                     <img
                       src={activeLogo}
                       alt={companyProfile.companyName || "Logo"}
-                      className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-md shrink-0"
+                      className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-md shrink-0 border border-slate-200"
                     />
                   ) : (
                     <div
@@ -3278,7 +3320,7 @@ const DocumentWorkspace = () => {
                       {companyProfile.companyName || "Your Company"}
                     </h2>
                     <p className="text-xs text-slate-300 mt-0.5 font-normal">
-                      {brandKit.tagline || ""}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
                 </div>
@@ -3312,7 +3354,7 @@ const DocumentWorkspace = () => {
                             .includes("client")
                           ? companyProfile.preparedFor
                           : `${companyProfile.preparedFor} ("the Client")`
-                        : 'Lagos SME Partners Ltd. ("the Client")'}
+                        : (companyProfile.preparedFor || "The Client")}
                     </p>
                   </div>
                   <div>
@@ -3339,20 +3381,28 @@ const DocumentWorkspace = () => {
                 <div className="-m-6 sm:-m-10 lg:-m-14 rounded-t-2xl bg-[#131B4D] p-6 sm:p-10 lg:p-12 mb-8 sm:mb-10 text-white shadow-xs">
                   {/* Brand Row: Logo badge + Company name + Tagline beside it */}
                   <div className="flex items-center gap-3.5">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
-                      style={{
-                        backgroundColor: brandKit.secondaryColor || "#2563EB",
-                      }}
-                    >
-                      {companyInitials}
-                    </div>
+                    {activeLogo ? (
+                      <img
+                        src={activeLogo}
+                        alt={companyProfile.companyName || "Logo"}
+                        className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-md shrink-0 border border-slate-200"
+                      />
+                    ) : (
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
+                        style={{
+                          backgroundColor: brandKit.secondaryColor || "#2563EB",
+                        }}
+                      >
+                        {companyInitials}
+                      </div>
+                    )}
                     <div>
                       <h2 className="text-sm font-extrabold text-white leading-tight">
                         {companyProfile.companyName || "Your Company"}
                       </h2>
                       <p className="text-xs text-slate-300 mt-0.5 font-normal">
-                        {brandKit.tagline || ""}
+                        {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                       </p>
                     </div>
                   </div>
@@ -3410,7 +3460,7 @@ const DocumentWorkspace = () => {
                           {companyProfile.companyName || "Your Company"}
                         </h2>
                         <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                          {brandKit.tagline || ""}
+                          {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                         </p>
                       </div>
                     </div>
@@ -3454,14 +3504,22 @@ const DocumentWorkspace = () => {
                 /* ==================================================================== */
                 <div className="space-y-6 mb-8">
                   {/* Badge */}
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-xs shrink-0"
-                    style={{
-                      backgroundColor: brandKit.secondaryColor || "#2563EB",
-                    }}
-                  >
-                    {companyInitials}
-                  </div>
+                  {activeLogo ? (
+                    <img
+                      src={activeLogo}
+                      alt={companyProfile.companyName || "Logo"}
+                      className="w-9 h-9 rounded-lg object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                    />
+                  ) : (
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-xs shrink-0"
+                      style={{
+                        backgroundColor: brandKit.secondaryColor || "#2563EB",
+                      }}
+                    >
+                      {companyInitials}
+                    </div>
+                  )}
 
                   {/* Kicker + Title + Tagline */}
                   <div>
@@ -3474,7 +3532,7 @@ const DocumentWorkspace = () => {
                         : `${(docTitle || "MARKETING PLAN").toUpperCase()} 2026`}
                     </h1>
                     <p className="text-xs sm:text-[13px] text-slate-500 font-normal">
-                      {brandKit.tagline || ""}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
 
@@ -3512,22 +3570,20 @@ const DocumentWorkspace = () => {
                       alt={companyProfile.companyName || "Logo"}
                       className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-md shrink-0"
                     />
-                  ) : (
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
-                      style={{
-                        backgroundColor: brandKit.secondaryColor || "#2563EB",
-                      }}
-                    >
-                      {companyInitials}
-                    </div>
-                  )}
+                  ) : (<div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
+                        style={{
+                          backgroundColor: brandKit.secondaryColor || "#2563EB",
+                        }}
+                      >
+                        {companyInitials}
+                      </div>)}
                   <div>
                     <h2 className="text-sm font-extrabold text-white leading-tight">
                       {companyProfile.companyName || "Ahiia"}
                     </h2>
                     <p className="text-xs text-slate-300 mt-0.5 font-normal">
-                      {brandKit.tagline || ""}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
                 </div>
@@ -3571,14 +3627,22 @@ const DocumentWorkspace = () => {
                 /* Corporate Business Plan Header (Matching Reference Design) */
                 <div className="space-y-6">
                   {/* Blue initials badge */}
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-xs shadow-xs shrink-0"
-                    style={{
-                      backgroundColor: brandKit.secondaryColor || "#2563EB",
-                    }}
-                  >
-                    {companyInitials}
-                  </div>
+                  {activeLogo ? (
+                    <img
+                      src={activeLogo}
+                      alt={companyProfile.companyName || "Logo"}
+                      className="w-9 h-9 rounded-lg object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                    />
+                  ) : (
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-xs shadow-xs shrink-0"
+                      style={{
+                        backgroundColor: brandKit.secondaryColor || "#2563EB",
+                      }}
+                    >
+                      {companyInitials}
+                    </div>
+                  )}
 
                   {/* Category kicker + Title + Tagline */}
                   <div>
@@ -3591,7 +3655,7 @@ const DocumentWorkspace = () => {
                         : `BUSINESS PLAN — ${docTitle.toUpperCase()}`}
                     </h1>
                     <p className="text-xs text-slate-500 font-normal">
-                      {brandKit.tagline}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
 
@@ -3642,7 +3706,7 @@ const DocumentWorkspace = () => {
                       {docTitle || "\u00A0"}
                     </h1>
                     <p className="text-xs text-slate-400 font-normal">
-                      {brandKit.tagline}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
@@ -3696,7 +3760,7 @@ const DocumentWorkspace = () => {
                       {docTitle || "\u00A0"}
                     </h1>
                     <p className="text-xs text-slate-400 font-normal">
-                      {brandKit.tagline}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
 
@@ -3725,20 +3789,28 @@ const DocumentWorkspace = () => {
                 <div>
                   <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0"
-                        style={{
-                          backgroundColor: brandKit.secondaryColor || "#2563EB",
-                        }}
-                      >
-                        {companyInitials}
-                      </div>
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={companyProfile.companyName || "Logo"}
+                          className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                        />
+                      ) : (
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0"
+                          style={{
+                            backgroundColor: brandKit.secondaryColor || "#2563EB",
+                          }}
+                        >
+                          {companyInitials}
+                        </div>
+                      )}
                       <div>
                         <h2 className="text-sm font-extrabold text-slate-900 leading-tight">
                           {companyProfile.companyName}
                         </h2>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {brandKit.tagline}
+                          {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                         </p>
                       </div>
                     </div>
@@ -3780,14 +3852,22 @@ const DocumentWorkspace = () => {
                 /* Corporate Contract Header (Faithfully matching design) */
                 <div className="space-y-6">
                   {/* Initials Badge */}
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-xs shadow-xs shrink-0"
-                    style={{
-                      backgroundColor: brandKit.secondaryColor || "#2563EB",
-                    }}
-                  >
-                    {companyInitials}
-                  </div>
+                  {activeLogo ? (
+                    <img
+                      src={activeLogo}
+                      alt={companyProfile.companyName || "Logo"}
+                      className="w-9 h-9 rounded-lg object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                    />
+                  ) : (
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-xs shadow-xs shrink-0"
+                      style={{
+                        backgroundColor: brandKit.secondaryColor || "#2563EB",
+                      }}
+                    >
+                      {companyInitials}
+                    </div>
+                  )}
 
                   {/* Kicker + Title + Tagline */}
                   <div>
@@ -3804,7 +3884,7 @@ const DocumentWorkspace = () => {
                         : `${(docTitle || "SERVICE").toUpperCase()} AGREEMENT`}
                     </h1>
                     <p className="text-xs text-slate-500 font-normal">
-                      {brandKit.tagline || ""}
+                      {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                     </p>
                   </div>
 
@@ -3821,7 +3901,7 @@ const DocumentWorkspace = () => {
                               .includes("client")
                             ? companyProfile.preparedFor
                             : `${companyProfile.preparedFor} ("the Client")`
-                          : 'Lagos SME Partners Ltd. ("the Client")'}
+                          : (companyProfile.preparedFor || "The Client")}
                       </p>
                     </div>
                     <div>
@@ -3845,20 +3925,28 @@ const DocumentWorkspace = () => {
                 <div>
                   <div className="flex items-start justify-between gap-4 pb-4">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-xs shrink-0"
-                        style={{
-                          backgroundColor: brandKit.secondaryColor || "#2563EB",
-                        }}
-                      >
-                        {companyInitials}
-                      </div>
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={companyProfile.companyName || "Logo"}
+                          className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                        />
+                      ) : (
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-sm shadow-xs shrink-0"
+                          style={{
+                            backgroundColor: brandKit.secondaryColor || "#2563EB",
+                          }}
+                        >
+                          {companyInitials}
+                        </div>
+                      )}
                       <div>
                         <h2 className="text-sm font-bold text-slate-900 leading-tight">
                           {companyProfile.companyName}
                         </h2>
                         <p className="text-xs text-slate-400 mt-0.5 font-normal">
-                          {brandKit.tagline || ""}
+                          {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                         </p>
                       </div>
                     </div>
@@ -3893,7 +3981,7 @@ const DocumentWorkspace = () => {
                               .includes("client")
                             ? companyProfile.preparedFor
                             : `${companyProfile.preparedFor} ("the Client")`
-                          : 'Lagos SME Partners Ltd. ("the Client")'}
+                          : (companyProfile.preparedFor || "The Client")}
                       </p>
                     </div>
                     <div>
@@ -3917,20 +4005,26 @@ const DocumentWorkspace = () => {
               <>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0"
-                      style={{
-                        backgroundColor: brandKit.secondaryColor || "#2563EB",
-                      }}
-                    >
-                      {companyInitials}
-                    </div>
+                    {activeLogo ? (
+                      <img
+                        src={activeLogo}
+                        alt={companyProfile.companyName || "Logo"}
+                        className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                      />
+                    ) : (<div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-xs shrink-0"
+                          style={{
+                            backgroundColor: brandKit.secondaryColor || "#2563EB",
+                          }}
+                        >
+                          {companyInitials}
+                        </div>)}
                     <div>
                       <h2 className="text-sm font-extrabold text-slate-900 leading-tight">
                         {companyProfile.companyName}
                       </h2>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {brandKit.tagline}
+                        {brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : ""}
                       </p>
                     </div>
                   </div>
@@ -4901,7 +4995,7 @@ const DocumentWorkspace = () => {
                                 For the Client
                               </p>
                               <p className="text-xs sm:text-sm font-bold text-slate-900">
-                                {companyProfile.preparedFor || "Lagos SME Partners Ltd."}
+                                {companyProfile.preparedFor || "The Client"}
                               </p>
                               <p className="text-[11px] text-slate-400 mt-0.5">
                                 Name, title and date
@@ -4945,7 +5039,7 @@ const DocumentWorkspace = () => {
                           For the Client
                         </p>
                         <p className="text-xs sm:text-sm font-bold text-slate-900">
-                          {companyProfile.preparedFor || "Lagos SME Partners Ltd."}
+                          {companyProfile.preparedFor || "The Client"}
                         </p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           Name, title and date
@@ -5196,12 +5290,20 @@ const DocumentWorkspace = () => {
       {/* ==================================================================== */}
       <div className="flex flex-col items-center justify-center gap-2 pt-4">
         <div className="inline-flex items-center gap-3.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-md text-xs">
-          <div
-            className="w-5 h-5 rounded-md flex items-center justify-center font-black text-white text-[9px] shadow-2xs"
-            style={{ backgroundColor: brandKit.secondaryColor || "#2563EB" }}
-          >
-            {companyInitials}
-          </div>
+          {activeLogo ? (
+            <img
+              src={activeLogo}
+              alt="Logo"
+              className="w-5 h-5 rounded-md object-contain bg-white p-0.5 shadow-2xs border border-slate-200"
+            />
+          ) : (
+            <div
+              className="w-5 h-5 rounded-md flex items-center justify-center font-black text-white text-[9px] shadow-2xs"
+              style={{ backgroundColor: brandKit.secondaryColor || "#2563EB" }}
+            >
+              {companyInitials}
+            </div>
+          )}
 
           <span className="font-bold text-slate-800">Brand Kit</span>
 

@@ -186,7 +186,7 @@ const CompanyProfile = () => {
   const [companyName, setCompanyName] = useState("");
   const [industry, setIndustry] = useState("Financial services");
   const [description, setDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("ahiia_active_logo") || "" : ""));
   const [logoName, setLogoName] = useState("");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [completenessPercent, setCompletenessPercent] = useState(80);
@@ -476,6 +476,7 @@ const CompanyProfile = () => {
       setLogoName(file.name);
       const uploadedUrl = await uploadImageToCloudinary(file);
       setLogoUrl(uploadedUrl);
+      try { localStorage.setItem("ahiia_active_logo", uploadedUrl); } catch {}
       // Automatically persist logo to backend profile immediately
       try {
         const cleanCompanyName = (companyName || profileRaw?.companyName || "").trim();

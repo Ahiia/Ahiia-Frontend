@@ -164,7 +164,23 @@ const DocumentSetup = () => {
                 setIsGenerating(false);
               }
               toast.success(`"${pending.payload?.title || "Document"}" created successfully!`);
-              navigate(`/dashboard/documents/${createdId}`, {
+              try {
+                if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+                  const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+                  localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
+                  const client = sInputs.clientName || sInputs.preparedFor;
+                  if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
+                }
+              } catch {}
+              try {
+        if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+          localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
+          const client = sInputs.clientName || sInputs.preparedFor;
+          if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
+        }
+      } catch {}
+      navigate(`/dashboard/documents/${createdId}`, {
                 state: {
                   document: syncResult,
                   newlyCreated: true,
@@ -207,7 +223,23 @@ const DocumentSetup = () => {
         }
         toast.success(`"${pending.payload?.title || "Document"}" generated successfully!`);
 
-        navigate(`/dashboard/documents/${docId}`, {
+        try {
+        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+          localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
+          const client = sInputs.clientName || sInputs.preparedFor;
+          if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
+        }
+      } catch {}
+      try {
+        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+          localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
+          const client = sInputs.clientName || sInputs.preparedFor;
+          if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
+        }
+      } catch {}
+      navigate(`/dashboard/documents/${docId}`, {
           state: {
             document,
             newlyCreated: true,
@@ -500,7 +532,15 @@ const DocumentSetup = () => {
             `"${payload.title}" created successfully! Generating document...`
           );
 
-          navigate(`/dashboard/documents/${createdId}`, {
+          try {
+        if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+          localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
+          const client = sInputs.clientName || sInputs.preparedFor;
+          if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
+        }
+      } catch {}
+      navigate(`/dashboard/documents/${createdId}`, {
             state: {
               document: result,
               newlyCreated: true,
@@ -551,6 +591,14 @@ const DocumentSetup = () => {
       }
       toast.success(`"${payload.title}" generated successfully!`);
 
+      try {
+        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
+          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+          localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
+          const client = sInputs.clientName || sInputs.preparedFor;
+          if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
+        }
+      } catch {}
       navigate(`/dashboard/documents/${docId}`, {
         state: {
           document,
