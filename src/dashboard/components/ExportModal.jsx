@@ -351,56 +351,10 @@ const ExportModal = ({
         return;
       }
 
-      // 2. Try backend API export if documentId exists and is valid
+      // 2. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
+      // Generates the live document with ALL user edits, latest tagline, and active logo.
+      // This guarantees edits are never lost to stale backend drafts.
       let backendExportSucceeded = false;
-      if (documentId && documentId !== "new") {
-        try {
-          const res = await exportDocument(documentId, {
-            format: selectedFormat,
-            styleTemplate: selectedStyle,
-            responseType: "blob",
-          });
-
-          const downloadUrl =
-            res?.downloadUrl ||
-            res?.url ||
-            res?.data?.downloadUrl ||
-            res?.data?.url ||
-            res?.fileUrl ||
-            res?.data?.fileUrl;
-
-          const blobData =
-            res?.data ||
-            res?.file ||
-            (res instanceof Blob ? res : null);
-
-          if (downloadUrl) {
-            const link = document.createElement("a");
-            link.href = downloadUrl;
-            link.download = `${(documentTitle || "document").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_")}_${selectedStyle}.${selectedFormat.toLowerCase()}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            backendExportSucceeded = true;
-          } else if (blobData instanceof Blob && blobData.size > 0) {
-            const url = URL.createObjectURL(blobData);
-            const link = document.createElement("a");
-            const safeName = (documentTitle || "document")
-              .replace(/[^\w\s-]/g, "")
-              .trim()
-              .replace(/\s+/g, "_");
-            link.href = url;
-            link.download = `${safeName}_${selectedStyle}.${selectedFormat.toLowerCase()}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            backendExportSucceeded = true;
-          }
-        } catch (apiErr) {
-          console.warn("Backend export endpoint not available or errored, generating client document:", apiErr);
-        }
-      }
 
       // 3. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
       // Generates the real document content, structure, styling, and branding.

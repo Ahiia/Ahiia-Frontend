@@ -2,26 +2,75 @@
 /**
  * Safely preloads an image URL into a base64 Data URL for jsPDF embedding
  */
+/**
+ * Safely preloads an image URL into a base64 Data URL for jsPDF embedding
+ * Optimized specifically for Safari / macOS WebKit to prevent tainted canvas SecurityError.
+ */
 async function preloadLogo(url) {
-  if (!url || typeof window === "undefined") return null;
+  if (!url || typeof url !== "string") {
+    // Check DOM if in browser
+    if (typeof document !== "undefined") {
+      const domImg = document.getElementById("workspace-company-logo") || document.querySelector("img[alt*='Logo']");
+      if (domImg && domImg.src && domImg.src.startsWith("data:image/")) {
+        return domImg.src;
+      }
+    }
+    return null;
+  }
+
+  // 1. Data URLs work 100% on Safari/macOS without any CORS checks
   if (url.startsWith("data:image/")) return url;
 
-  // Try fetching as Blob first to bypass canvas tainting
+  // 2. Check localStorage cache for pre-converted data URL
+  if (typeof window !== "undefined") {
+    const cachedData = localStorage.getItem("ahiia_active_logo_data") || localStorage.getItem("ahiia_active_logo");
+    if (cachedData && cachedData.startsWith("data:image/")) {
+      return cachedData;
+    }
+  }
+
+  // 3. Try DOM image element if already loaded in the workspace
+  if (typeof document !== "undefined") {
+    const domImg = document.getElementById("workspace-company-logo") || document.querySelector("img[alt*='Logo']");
+    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = domImg.naturalWidth;
+        canvas.height = domImg.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(domImg, 0, 0);
+        const dataUrl = canvas.toDataURL("image/png");
+        if (dataUrl && dataUrl.startsWith("data:image/")) {
+          try { localStorage.setItem("ahiia_active_logo_data", dataUrl); } catch {}
+          return dataUrl;
+        }
+      } catch (e) {
+        // Tainted canvas on Safari, continue to fallback
+      }
+    }
+  }
+
+  // 4. Fetch as blob -> FileReader
   try {
-    const res = await fetch(url, { mode: "cors" });
+    const res = await fetch(url, { mode: "cors", cache: "force-cache" });
     if (res.ok) {
       const blob = await res.blob();
-      return await new Promise((resolve) => {
+      const dataUrl = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(blob);
       });
+      if (dataUrl && typeof dataUrl === "string" && dataUrl.startsWith("data:image/")) {
+        try { localStorage.setItem("ahiia_active_logo_data", dataUrl); } catch {}
+        return dataUrl;
+      }
     }
   } catch (err) {
-    // Fall back to Image element
+    console.warn("Direct fetch preload failed on Safari:", err);
   }
 
+  // 5. Fallback Image element with crossOrigin
   try {
     return await new Promise((resolve) => {
       const img = new Image();
@@ -29,17 +78,17 @@ async function preloadLogo(url) {
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth || img.width;
-          canvas.height = img.naturalHeight || img.height;
+          canvas.width = img.naturalWidth || 300;
+          canvas.height = img.naturalHeight || 300;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0);
           resolve(canvas.toDataURL("image/png"));
         } catch {
-          resolve(img);
+          resolve(null);
         }
       };
       img.onerror = () => resolve(null);
-      setTimeout(() => resolve(null), 3000);
+      setTimeout(() => resolve(null), 3500);
       img.src = url;
     });
   } catch {
@@ -935,26 +984,64 @@ export async function exportToPdf({
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
     cursorY += 8;
   } else {
-    // Minimal
-    doc.setTextColor(30, 41, 59);
+    // ========================================================================
+    // MINIMAL HEADER (Faithfully renders Logo, Company Name, Tagline & Details)
+    // Matches Image 1 & Image 2 reference layout
+    // ========================================================================
+    // 1. Top Brand Row: Logo (or Badge) + Company Name + Tagline on left, Doc Type on right
+    drawBadgeOrLogo(margin, cursorY, 10, 2);
+
+    doc.setTextColor(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text(documentTitle, margin, cursorY + 6);
+    doc.setFontSize(10.5);
+    doc.text(companyProfile.companyName || "Your Company", margin + 13, cursorY + 4.5);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(
-      `${documentType} · Prepared for ${companyProfile.preparedFor || "Client"}`,
-      margin,
-      cursorY + 14
-    );
+    const safeTagline =
+      (brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : "") ||
+      (typeof window !== "undefined" ? localStorage.getItem("ahiia_brand_tagline") || "" : "");
 
-    cursorY += 22;
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.3);
+    if (safeTagline) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(safeTagline, margin + 13, cursorY + 8.5);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text((documentType || "PROPOSAL").toUpperCase(), pageWidth - margin, cursorY + 5, { align: "right" });
+
+    cursorY += 16;
+
+    // 2. Document Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
+    const splitTitle = doc.splitTextToSize(documentTitle.toUpperCase(), contentWidth);
+    doc.text(splitTitle, margin, cursorY);
+    cursorY += splitTitle.length * 7 + 4;
+
+    // 3. Metadata Grid: Prepared for / Prepared by
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text("PREPARED FOR", margin, cursorY);
+    doc.text("PREPARED BY", pageWidth / 2, cursorY);
+    cursorY += 4.5;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(companyProfile.preparedFor || "The Client", margin, cursorY);
+    doc.text(companyProfile.preparedBy || companyProfile.companyName || "Your Company", pageWidth / 2, cursorY);
+    cursorY += 6;
+
+    // Divider line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 8;
+    cursorY += 10;
   }
 
   // Metadata block

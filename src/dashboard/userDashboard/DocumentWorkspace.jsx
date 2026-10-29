@@ -4074,7 +4074,7 @@ const DocumentWorkspace = () => {
                         <img
                           src={activeLogo}
                           alt={companyProfile.companyName || "Logo"}
-                          className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200 group-hover:border-blue-400 transition-all"
+                          id="workspace-company-logo" className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200 group-hover:border-blue-400 transition-all"
                         />
                       ) : (
                         <div
