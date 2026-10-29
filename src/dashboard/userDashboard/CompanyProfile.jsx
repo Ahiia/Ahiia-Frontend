@@ -476,7 +476,41 @@ const CompanyProfile = () => {
       setLogoName(file.name);
       const uploadedUrl = await uploadImageToCloudinary(file);
       setLogoUrl(uploadedUrl);
-      toast.success("Logo uploaded successfully!");
+      // Automatically persist logo to backend profile immediately
+      try {
+        const cleanCompanyName = (companyName || profileRaw?.companyName || "").trim();
+        const cleanIndustry = industry || profileRaw?.industry || "Financial services";
+        const cleanDesc = description || profileRaw?.description || "";
+        const payload = {
+          companyName: cleanCompanyName,
+          industry: cleanIndustry,
+          description: cleanDesc,
+          businessDescription: cleanDesc,
+          logoUrl: uploadedUrl,
+          mission: sections.find((s) => s.id === "mission")?.body || profileRaw?.mission || "",
+          vision: sections.find((s) => s.id === "vision")?.body || profileRaw?.vision || "",
+          competitiveAdvantage:
+            sections.find((s) => s.id === "competitiveAdvantage")?.body ||
+            profileRaw?.competitiveAdvantage ||
+            "",
+          targetAudience:
+            sections.find((s) => s.id === "targetAudience")?.body ||
+            profileRaw?.targetAudience ||
+            "",
+        };
+
+        if (!hasExistingProfile) {
+          try {
+            await createUserProfile(payload);
+            setHasExistingProfile(true);
+          } catch {}
+        }
+        await updateBusinessContext(payload);
+        toast.success("Logo saved and applied to your profile!");
+      } catch (saveErr) {
+        console.warn("Auto-save logo warning:", saveErr);
+        toast.success("Logo uploaded successfully!");
+      }
 
       // Auto-notify profile update with new logo
       window.dispatchEvent(

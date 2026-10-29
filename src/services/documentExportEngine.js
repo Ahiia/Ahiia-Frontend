@@ -134,11 +134,11 @@ export async function exportToPdf({
           // Brand name & tagline
           doc.setFontSize(14);
           doc.setTextColor(255, 255, 255);
-          doc.text(companyProfile.companyName || "SolarTech Nigeria", margin + 26, margin + 12);
+          doc.text(companyProfile.companyName || "Your Company", margin + 26, margin + 12);
           doc.setFont("helvetica", "normal");
           doc.setFontSize(9);
           doc.setTextColor(191, 219, 254);
-          doc.text(brandKit.tagline || "Clean power, built to last", margin + 26, margin + 18);
+          doc.text(brandKit.tagline || "", margin + 26, margin + 18);
 
           // Hero headline
           doc.setFont("helvetica", "bold");
@@ -199,7 +199,7 @@ export async function exportToPdf({
           doc.setFontSize(9);
           doc.setTextColor(148, 163, 184);
           doc.text(
-            `${companyProfile.companyName || "SolarTech Nigeria"} • ${brandKit.tagline || "Clean power, built to last"}`,
+            `${companyProfile.companyName || "Your Company"} • ${brandKit.tagline || ""}`,
             margin + 5,
             pageHeight - 10
           );
@@ -221,11 +221,11 @@ export async function exportToPdf({
           // Brand name & tagline
           doc.setFontSize(13);
           doc.setTextColor(11, 21, 54);
-          doc.text(companyProfile.companyName || "SolarTech Nigeria", margin + 25, margin + 10);
+          doc.text(companyProfile.companyName || "Your Company", margin + 25, margin + 10);
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8.5);
           doc.setTextColor(100, 116, 139);
-          doc.text(brandKit.tagline || "Clean power, built to last", margin + 25, margin + 16);
+          doc.text(brandKit.tagline || "", margin + 25, margin + 16);
 
           // Hero headline
           doc.setFont("helvetica", "bold");
@@ -322,7 +322,7 @@ export async function exportToPdf({
           doc.setFont("helvetica", "normal");
           doc.setFontSize(9);
           doc.setTextColor(100, 116, 139);
-          doc.text(companyProfile.companyName || "SolarTech Nigeria", margin, pageHeight - 10);
+          doc.text(companyProfile.companyName || "Your Company", margin, pageHeight - 10);
           doc.text(`${idx + 1} / ${totalSlides}`, pageWidth - margin, pageHeight - 10, { align: "right" });
         } else if (styleTemplate === "Minimal") {
           // Minimal kicker (muted gray, spaced)
@@ -388,7 +388,7 @@ export async function exportToPdf({
           doc.setFont("helvetica", "normal");
           doc.setFontSize(9);
           doc.setTextColor(148, 163, 184);
-          doc.text(companyProfile.companyName || "SolarTech Nigeria", margin, pageHeight - 9);
+          doc.text(companyProfile.companyName || "Your Company", margin, pageHeight - 9);
           doc.text(`${idx + 1} / ${totalSlides}`, pageWidth - margin, pageHeight - 9, { align: "right" });
         } else {
           // Corporate kicker (blue, with top-right dash)
@@ -453,7 +453,7 @@ export async function exportToPdf({
           doc.setFont("helvetica", "normal");
           doc.setFontSize(9);
           doc.setTextColor(148, 163, 184);
-          doc.text(companyProfile.companyName || "SolarTech Nigeria", margin, pageHeight - 9);
+          doc.text(companyProfile.companyName || "Your Company", margin, pageHeight - 9);
           doc.text(`${idx + 1} / ${totalSlides}`, pageWidth - margin, pageHeight - 9, { align: "right" });
         }
       }
@@ -503,11 +503,11 @@ export async function exportToPdf({
       doc.text(initials, margin + 4, 13.5, { align: "center" });
 
       doc.setFontSize(10);
-      doc.text(companyProfile.companyName || "SolarTech Nigeria", margin + 11, 11);
+      doc.text(companyProfile.companyName || "Your Company", margin + 11, 11);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.5);
       doc.setTextColor(203, 213, 225);
-      doc.text(brandKit.tagline || "Clean power, built to last", margin + 11, 15);
+      doc.text(brandKit.tagline || "", margin + 11, 15);
 
       // Kicker & Document Title
       doc.setFont("helvetica", "bold");
@@ -537,7 +537,7 @@ export async function exportToPdf({
       doc.setFontSize(8);
       doc.setTextColor(255, 255, 255);
       doc.text(companyProfile.preparedFor || "Commercial team", margin, 43);
-      doc.text(companyProfile.preparedBy || companyProfile.companyName || "SolarTech Nigeria", pageWidth / 2, 43);
+      doc.text(companyProfile.preparedBy || companyProfile.companyName || "Your Company", pageWidth / 2, 43);
 
       cursorY = 56;
     } else if (styleTemplate === "Corporate") {
@@ -560,12 +560,12 @@ export async function exportToPdf({
       doc.setTextColor(15, 23, 42);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
-      doc.text(companyProfile.companyName || "SolarTech Nigeria", margin + 12, cursorY + 4);
+      doc.text(companyProfile.companyName || "Your Company", margin + 12, cursorY + 4);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.5);
       doc.setTextColor(100, 116, 139);
-      doc.text(brandKit.tagline || "Clean power, built to last", margin + 12, cursorY + 8);
+      doc.text(brandKit.tagline || "", margin + 12, cursorY + 8);
 
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
@@ -599,7 +599,7 @@ export async function exportToPdf({
       doc.setFontSize(8.5);
       doc.setTextColor(15, 23, 42);
       doc.text(companyProfile.preparedFor || "Commercial team", margin, cursorY);
-      doc.text(companyProfile.preparedBy || companyProfile.companyName || "SolarTech Nigeria", pageWidth / 2, cursorY);
+      doc.text(companyProfile.preparedBy || companyProfile.companyName || "Your Company", pageWidth / 2, cursorY);
       cursorY += 7;
 
       // Dark bottom line
@@ -644,7 +644,7 @@ export async function exportToPdf({
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
-      doc.text(brandKit.tagline || "Clean power, built to last", margin, cursorY);
+      doc.text(brandKit.tagline || "", margin, cursorY);
       cursorY += 9;
 
       doc.setFont("helvetica", "normal");
@@ -658,7 +658,7 @@ export async function exportToPdf({
       doc.setFontSize(8.5);
       doc.setTextColor(15, 23, 42);
       doc.text(companyProfile.preparedFor || "Commercial team", margin, cursorY);
-      doc.text(companyProfile.preparedBy || companyProfile.companyName || "SolarTech Nigeria", pageWidth / 2, cursorY);
+      doc.text(companyProfile.preparedBy || companyProfile.companyName || "Your Company", pageWidth / 2, cursorY);
       cursorY += 12;
     }
   } else if (isContract && styleTemplate !== "Minimal") {
@@ -683,11 +683,11 @@ export async function exportToPdf({
     doc.text(initials, margin + 4, 13.5, { align: "center" });
 
     doc.setFontSize(10);
-    doc.text(companyProfile.companyName || "SolarTech Nigeria", margin + 11, 11);
+    doc.text(companyProfile.companyName || "Your Company", margin + 11, 11);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(203, 213, 225);
-    doc.text(brandKit.tagline || "Clean power, built to last", margin + 11, 15);
+    doc.text(brandKit.tagline || "", margin + 11, 15);
 
     // Kicker & Document Title
     doc.setFont("helvetica", "bold");
@@ -780,7 +780,7 @@ export async function exportToPdf({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(100, 116, 139);
-    doc.text(brandKit.tagline || "Clean power, built to last", margin, cursorY);
+    doc.text(brandKit.tagline || "", margin, cursorY);
     cursorY += 10;
 
     doc.setFont("helvetica", "normal");
@@ -1474,7 +1474,7 @@ export async function exportToPdf({
 
     if (isContract || isMarketingPlan) {
       doc.text(
-        companyProfile.companyName || "SolarTech Nigeria",
+        companyProfile.companyName || "Your Company",
         margin,
         pageHeight - 7
       );
@@ -1569,7 +1569,7 @@ export async function exportToPptx({
       });
 
       // Company & Tagline beside badge
-      coverSlide.addText(companyProfile.companyName || "SolarTech Nigeria", {
+      coverSlide.addText(companyProfile.companyName || "Your Company", {
         x: 2.0,
         y: 0.8,
         w: 7.0,
@@ -1578,7 +1578,7 @@ export async function exportToPptx({
         color: "FFFFFF",
         fontFace: "Arial",
       });
-      coverSlide.addText(brandKit.tagline || "Clean power, built to last", {
+      coverSlide.addText(brandKit.tagline || "", {
         x: 2.0,
         y: 1.15,
         w: 7.0,
@@ -1682,7 +1682,7 @@ export async function exportToPptx({
 
       if (styleTemplate !== "Minimal") {
         // Company & Tagline beside badge in Corporate
-        coverSlide.addText(companyProfile.companyName || "SolarTech Nigeria", {
+        coverSlide.addText(companyProfile.companyName || "Your Company", {
           x: 2.0,
           y: 0.8,
           w: 7.0,
@@ -1691,7 +1691,7 @@ export async function exportToPptx({
           color: "0F172A",
           fontFace: "Arial",
         });
-        coverSlide.addText(brandKit.tagline || "Clean power, built to last", {
+        coverSlide.addText(brandKit.tagline || "", {
           x: 2.0,
           y: 1.15,
           w: 7.0,
@@ -1746,7 +1746,7 @@ export async function exportToPptx({
       });
       coverSlide.addText(
         styleTemplate === "Minimal"
-          ? `${companyProfile.companyName || "SolarTech Nigeria"} • ${brandKit.tagline || "Clean power, built to last"}`
+          ? `${companyProfile.companyName || "Your Company"} • ${brandKit.tagline || ""}`
           : "Confidential • Investor presentation",
         {
           x: 1.0,
@@ -1991,7 +1991,7 @@ export async function exportToPptx({
         }
 
         // Footer
-        slide.addText(companyProfile.companyName || "SolarTech Nigeria", {
+        slide.addText(companyProfile.companyName || "Your Company", {
           x: 0.8,
           y: 6.85,
           w: 6.0,
@@ -2159,7 +2159,7 @@ export async function exportToPptx({
         h: 0,
         line: { color: "E2E8F0", width: 1 },
       });
-      slide.addText(companyProfile.companyName || "SolarTech Nigeria", {
+      slide.addText(companyProfile.companyName || "Your Company", {
         x: 0.8,
         y: 6.85,
         w: 6.0,
@@ -2390,9 +2390,9 @@ export async function exportToDocx({
       children: [
         new TextRun({
           text: isMarketingPlan
-            ? `MARKETING PLAN  ·  ${companyProfile.companyName || "SolarTech Nigeria"}  ·  ${styleTemplate} Layout`
+            ? `MARKETING PLAN  ·  ${companyProfile.companyName || "Your Company"}  ·  ${styleTemplate} Layout`
             : isContract
-              ? `CONTRACT  ·  ${companyProfile.companyName || "SolarTech Nigeria"}`
+              ? `CONTRACT  ·  ${companyProfile.companyName || "Your Company"}`
               : `${documentType.toUpperCase()}  ·  ${companyProfile.companyName || "Ahiia"}  ·  ${styleTemplate} Style`,
           bold: true,
           color: accentHex,
@@ -2407,9 +2407,9 @@ export async function exportToDocx({
       children: [
         new TextRun({
           text: isMarketingPlan
-            ? `Prepared for: ${companyProfile.preparedFor || "Commercial team"}   |   Prepared by: ${companyProfile.preparedBy || companyProfile.companyName || "SolarTech Nigeria"}`
+            ? `Prepared for: ${companyProfile.preparedFor || "Commercial team"}   |   Prepared by: ${companyProfile.preparedBy || companyProfile.companyName || "Your Company"}`
             : isContract
-              ? `Between: ${companyProfile.preparedFor || "Lagos SME Partners Ltd."} ("the Client")   |   And: ${companyProfile.companyName || "SolarTech Nigeria"} ("the Provider")`
+              ? `Between: ${companyProfile.preparedFor || "Lagos SME Partners Ltd."} ("the Client")   |   And: ${companyProfile.companyName || "Your Company"} ("the Provider")`
               : `Prepared for: ${companyProfile.preparedFor || "Client"}   |   Date: ${new Date().toLocaleDateString()}`,
           color: "64748B",
           size: 18,

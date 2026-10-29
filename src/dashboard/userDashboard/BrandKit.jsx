@@ -139,7 +139,30 @@ const BrandKit = () => {
         const url = await uploadImageToCloudinary(file);
         setLogoUrl(url);
         markDirty();
-        toast.success("Logo uploaded!");
+        // Automatically persist logo to Brand Kit on the server
+        try {
+          const validLinks = socialLinks
+            .filter((s) => s.url && s.url.trim())
+            .map((s) => `${s.platform}: ${s.url.trim()}`)
+            .join(", ");
+          await updateBrandKit({
+            primaryColor,
+            secondaryColor,
+            font,
+            tagline,
+            logoUrl: url,
+            socialLinks: validLinks,
+          });
+          toast.success("Logo saved and applied to Brand Kit!");
+        } catch {
+          toast.success("Logo uploaded!");
+        }
+
+        window.dispatchEvent(
+          new CustomEvent("ahiia:profile-updated", {
+            detail: { logoUrl: url, font, primaryColor, secondaryColor, tagline },
+          }),
+        );
       } catch (err) {
         console.error("Logo upload failed:", err);
         toast.error("Failed to upload logo image");
