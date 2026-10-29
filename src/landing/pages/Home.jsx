@@ -7,6 +7,7 @@ import DocumentLibrary from "../components/DocumentLibrary";
 import AiQualitySection from "../components/AiQualitySection";
 import WaitlistCta from "../components/WaitListCta";
 import { scrollToSection } from "../../utils/scrollToSection";
+import logo from "../../assets/ahiia_icon.svg";
 
 const FIELDS = [
   { label: "Company", value: "Kanto Logistics Ltd." },
@@ -119,11 +120,14 @@ const HeroMock = ({ show }) => (
               Brand Kit Applied
             </div>
             <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-slate-900 border border-slate-200 p-1 shadow-xs shrink-0">
+                <img src={logo} alt="Ahiia Logo" className="h-4 w-4 object-contain" />
+              </span>
               <span className="h-7 w-7 rounded-sm bg-indigo-800 border border-white/10" />
               <span className="h-7 w-7 rounded-sm bg-indigo-500 border border-white/10" />
               <span className="h-7 w-7 rounded-sm bg-indigo-300 border border-white/10" />
               <span className="ml-1 text-[11px] text-gray-500 leading-tight">
-                Montserrat &middot; Logo
+                Montserrat &middot; Ahiia Logo
               </span>
             </div>
           </div>
@@ -233,17 +237,17 @@ const Home = () => {
 
             <Reveal show={mounted} delay={100}>
               <h1 className="mt-6 text-[2.1rem] leading-[1.2] sm:text-5xl md:text-6xl font-bold tracking-tight text-white text-balance">
-                Create Professional Business Documents With{" "}
-                <span className="text-indigo-400">Ahiia.AI</span>
-                <br /> In Minutes.
+                Smarter Business Document Creation With{" "}
+                <span className="text-indigo-400">Ahiia.ai</span>
+
               </h1>
             </Reveal>
 
             <Reveal show={mounted} delay={180}>
               <p className="mt-5 sm:mt-6 text-base sm:text-lg text-slate-300 mx-auto text-balance">
-                Proposals and business plans to pitch decks, contracts, SOPs,
-                marketing plan and more, AHIIA helps you create polished
-                business documents faster, smarter and with confidence.
+                Ahiia.ai helps businesses, consultants, and agencies streamline
+                the creation of proposals, business plans, contracts, SOPs, and
+                other business documents faster, smarter, and with confidence.
               </p>
             </Reveal>
 
