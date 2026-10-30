@@ -1,106 +1,10 @@
-
-/**
- * Safely preloads an image URL into a base64 Data URL for jsPDF embedding
- */
-/**
- * Safely preloads an image URL into a base64 Data URL for jsPDF embedding
- * Optimized specifically for Safari / macOS WebKit to prevent tainted canvas SecurityError.
- */
-async function preloadLogo(url) {
-  if (!url || typeof url !== "string") {
-    // Check DOM if in browser
-    if (typeof document !== "undefined") {
-      const domImg = document.getElementById("workspace-company-logo") || document.querySelector("img[alt*='Logo']");
-      if (domImg && domImg.src && domImg.src.startsWith("data:image/")) {
-        return domImg.src;
-      }
-    }
-    return null;
-  }
-
-  // 1. Data URLs work 100% on Safari/macOS without any CORS checks
-  if (url.startsWith("data:image/")) return url;
-
-  // 2. Check localStorage cache for pre-converted data URL
-  if (typeof window !== "undefined") {
-    const cachedData = localStorage.getItem("ahiia_active_logo_data") || localStorage.getItem("ahiia_active_logo");
-    if (cachedData && cachedData.startsWith("data:image/")) {
-      return cachedData;
-    }
-  }
-
-  // 3. Try DOM image element if already loaded in the workspace
-  if (typeof document !== "undefined") {
-    const domImg = document.getElementById("workspace-company-logo") || document.querySelector("img[alt*='Logo']");
-    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = domImg.naturalWidth;
-        canvas.height = domImg.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(domImg, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        if (dataUrl && dataUrl.startsWith("data:image/")) {
-          try { localStorage.setItem("ahiia_active_logo_data", dataUrl); } catch {}
-          return dataUrl;
-        }
-      } catch (e) {
-        // Tainted canvas on Safari, continue to fallback
-      }
-    }
-  }
-
-  // 4. Fetch as blob -> FileReader
-  try {
-    const res = await fetch(url, { mode: "cors", cache: "force-cache" });
-    if (res.ok) {
-      const blob = await res.blob();
-      const dataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      });
-      if (dataUrl && typeof dataUrl === "string" && dataUrl.startsWith("data:image/")) {
-        try { localStorage.setItem("ahiia_active_logo_data", dataUrl); } catch {}
-        return dataUrl;
-      }
-    }
-  } catch (err) {
-    console.warn("Direct fetch preload failed on Safari:", err);
-  }
-
-  // 5. Fallback Image element with crossOrigin
-  try {
-    return await new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth || 300;
-          canvas.height = img.naturalHeight || 300;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL("image/png"));
-        } catch {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      setTimeout(() => resolve(null), 3500);
-      img.src = url;
-    });
-  } catch {
-    return null;
-  }
-}
-
+import { loadExportLogo, fitImage, triggerBlobDownload } from "./exportAssets.js";
 import { jsPDF } from "jspdf";
 import pptxgen from "pptxgenjs";
 import {
   Document as DocxDocument,
   Packer,
+  ImageRun,
   Paragraph,
   TextRun,
   HeadingLevel,
@@ -145,18 +49,21 @@ function cleanHex(hex, fallback = "2563EB") {
   return clean.length === 6 ? clean.toUpperCase() : fallback;
 }
 
-/**
- * Helper to download Blob in browser
- */
-function triggerBlobDownload(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+function drawPdfLogo(doc, logo, x, y, size) {
+  const image = fitImage(logo.width, logo.height, size - 1, size - 1);
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(x, y, size, size, 1, 1, "F");
+  doc.addImage(logo.dataUrl, "PNG", x + (size - image.width) / 2,
+    y + (size - image.height) / 2, image.width, image.height, "company-logo", "FAST");
+}
+
+function drawPptxLogo(pres, slide, logo, x, y, width, height) {
+  const image = fitImage(logo.width, logo.height, width * 0.9, height * 0.9);
+  slide.addShape(pres.ShapeType.rect, { x, y, w: width, h: height,
+    fill: { color: "FFFFFF" }, line: { color: "FFFFFF", transparency: 100 } });
+  slide.addImage({ data: logo.dataUrl, x: x + (width - image.width) / 2,
+    y: y + (height - image.height) / 2, w: image.width, h: image.height,
+    altText: "Company logo" });
 }
 
 /**
@@ -175,6 +82,7 @@ export async function exportToPdf({
   sections = [],
   filename,
 }) {
+  const logo = await loadExportLogo(brandKit.logoUrl || companyProfile.logoUrl);
   const isPitchDeck =
     documentType.toLowerCase().includes("deck") ||
     documentType.toLowerCase().includes("pitch") ||
@@ -193,6 +101,17 @@ export async function exportToPdf({
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
+  const drawBadgeOrLogo = (x, y, size) => {
+    if (logo) return drawPdfLogo(doc, logo, x, y, size);
+    const initials = (companyProfile.companyName || "Your Company").split(/\s+/).filter(Boolean)
+      .slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+    doc.setFillColor(...primaryRgb);
+    doc.roundedRect(x, y, size, size, 1, 1, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.text(initials, x + size / 2, y + size * 0.7, { align: "center" });
+  };
+
 
   const primaryRgb = hexToRgb(brandKit.primaryColor, [15, 23, 42]);
   const accentRgb = hexToRgb(brandKit.secondaryColor, [37, 99, 235]);
@@ -227,7 +146,8 @@ export async function exportToPdf({
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(13);
-          doc.text(initials, margin + 13, margin + 17, { align: "center" });
+          if (logo) drawPdfLogo(doc, logo, (margin + 13) - 14/2, (margin + 17) - 14*0.72, 14);
+          else doc.text(initials, margin + 13, margin + 17, { align: "center" });
 
           // Brand name & tagline
           doc.setFontSize(14);
@@ -273,7 +193,8 @@ export async function exportToPdf({
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(13);
-          doc.text(initials, margin + 13, margin + 17, { align: "center" });
+          if (logo) drawPdfLogo(doc, logo, (margin + 13) - 14/2, (margin + 17) - 14*0.72, 14);
+          else doc.text(initials, margin + 13, margin + 17, { align: "center" });
 
           // Hero headline
           doc.setFont("helvetica", "bold");
@@ -314,7 +235,8 @@ export async function exportToPdf({
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(12);
-          doc.text(initials, margin + 12.5, margin + 14, { align: "center" });
+          if (logo) drawPdfLogo(doc, logo, (margin + 12.5) - 14/2, (margin + 14) - 14*0.72, 14);
+          else doc.text(initials, margin + 12.5, margin + 14, { align: "center" });
 
           // Brand name & tagline
           doc.setFontSize(13);
@@ -562,7 +484,7 @@ export async function exportToPdf({
       `${documentTitle.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_")}_${styleTemplate}.pdf`;
     const pdfBlob = doc.output("blob");
     triggerBlobDownload(pdfBlob, finalFilename);
-    return;
+    return pdfBlob;
   }
 
   let cursorY = margin;
@@ -598,7 +520,8 @@ export async function exportToPdf({
         .join("")
         .substring(0, 2)
         .toUpperCase();
-      doc.text(initials, margin + 4, 13.5, { align: "center" });
+      if (logo) drawPdfLogo(doc, logo, (margin + 4) - 8/2, (13.5) - 8*0.72, 8);
+          else doc.text(initials, margin + 4, 13.5, { align: "center" });
 
       doc.setFontSize(10);
       doc.text(companyProfile.companyName || "Your Company", margin + 11, 11);
@@ -653,7 +576,8 @@ export async function exportToPdf({
         .join("")
         .substring(0, 2)
         .toUpperCase();
-      doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
+      if (logo) drawPdfLogo(doc, logo, (margin + 4.25) - 8/2, (cursorY + 5.8) - 8*0.72, 8);
+          else doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
 
       doc.setTextColor(15, 23, 42);
       doc.setFont("helvetica", "bold");
@@ -720,7 +644,8 @@ export async function exportToPdf({
         .join("")
         .substring(0, 2)
         .toUpperCase();
-      doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
+      if (logo) drawPdfLogo(doc, logo, (margin + 4.25) - 8/2, (cursorY + 5.8) - 8*0.72, 8);
+          else doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
 
       cursorY += 13;
 
@@ -778,7 +703,8 @@ export async function exportToPdf({
       .join("")
       .substring(0, 2)
       .toUpperCase();
-    doc.text(initials, margin + 4, 13.5, { align: "center" });
+    if (logo) drawPdfLogo(doc, logo, (margin + 4) - 8/2, (13.5) - 8*0.72, 8);
+          else doc.text(initials, margin + 4, 13.5, { align: "center" });
 
     doc.setFontSize(10);
     doc.text(companyProfile.companyName || "Your Company", margin + 11, 11);
@@ -850,7 +776,8 @@ export async function exportToPdf({
       .join("")
       .substring(0, 2)
       .toUpperCase();
-    doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
+    if (logo) drawPdfLogo(doc, logo, (margin + 4.25) - 8/2, (cursorY + 5.8) - 8*0.72, 8);
+          else doc.text(initials, margin + 4.25, cursorY + 5.8, { align: "center" });
 
     cursorY += 12;
 
@@ -923,7 +850,8 @@ export async function exportToPdf({
       .join("")
       .substring(0, 2)
       .toUpperCase();
-    doc.text(initials, margin + 4, 13.5, { align: "center" });
+    if (logo) drawPdfLogo(doc, logo, (margin + 4) - 8/2, (13.5) - 8*0.72, 8);
+          else doc.text(initials, margin + 4, 13.5, { align: "center" });
 
     doc.setFontSize(10);
     doc.text(companyProfile.companyName || "Ahiia", margin + 11, 11);
@@ -961,6 +889,14 @@ export async function exportToPdf({
 
     cursorY = 52;
   } else if (styleTemplate === "Corporate") {
+    if (logo) {
+      drawPdfLogo(doc, logo, margin, cursorY, 12);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...primaryRgb);
+      doc.text(companyProfile.companyName || "Your Company", margin + 16, cursorY + 7);
+      cursorY += 18;
+    }
     doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
     doc.rect(margin, cursorY, 6, 20, "F");
 
@@ -1649,6 +1585,7 @@ export async function exportToPptx({
   sections = [],
   filename,
 }) {
+  const logo = await loadExportLogo(brandKit.logoUrl || companyProfile.logoUrl);
   const pres = new pptxgen();
   pres.layout = "LAYOUT_16x9";
   pres.author = companyProfile.companyName || "Ahiia.AI";
@@ -1691,7 +1628,8 @@ export async function exportToPptx({
         fill: { color: accentHex },
         rectRadius: 0.15,
       });
-      coverSlide.addText(initials, {
+      if (logo) drawPptxLogo(pres, coverSlide, logo, 1.0, 0.8, 0.8, 0.8);
+      else coverSlide.addText(initials, {
         x: 1.0,
         y: 0.8,
         w: 0.8,
@@ -1803,7 +1741,8 @@ export async function exportToPptx({
         fill: { color: accentHex },
         rectRadius: 0.15,
       });
-      coverSlide.addText(initials, {
+      if (logo) drawPptxLogo(pres, coverSlide, logo, 1.0, 0.8, 0.8, 0.8);
+      else coverSlide.addText(initials, {
         x: 1.0,
         y: 0.8,
         w: 0.8,
@@ -2468,7 +2407,10 @@ export async function exportToPptx({
   const finalFilename =
     filename ||
     `${documentTitle.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_")}_${styleTemplate}.pptx`;
-  await pres.writeFile({ fileName: finalFilename });
+  if (logo && !isPitchDeck) drawPptxLogo(pres, coverSlide, logo, 0.65, 0.35, 0.8, 0.8);
+  const blob = await pres.write({ outputType: "blob" });
+  triggerBlobDownload(blob, finalFilename);
+  return blob;
 }
 
 /**
@@ -2486,6 +2428,7 @@ export async function exportToDocx({
   sections = [],
   filename,
 }) {
+  const logo = await loadExportLogo(brandKit.logoUrl || companyProfile.logoUrl);
   const primaryHex = cleanHex(brandKit.primaryColor, "0F172A");
   const accentHex = cleanHex(brandKit.secondaryColor, "2563EB");
 
@@ -2513,6 +2456,12 @@ export async function exportToDocx({
       : `${(documentTitle || "MARKETING PLAN").toUpperCase()} 2026`);
 
   const docChildren = [
+    ...(logo ? [new Paragraph({
+      children: [new ImageRun({ type: "png", data: logo.bytes,
+        transformation: fitImage(logo.width, logo.height, 160, 64),
+        altText: { title: "Company logo", description: companyProfile.companyName || "Company logo", name: "Company logo" } })],
+      spacing: { after: 180 },
+    })] : []),
     // Document Title
     new Paragraph({
       text: isMarketingPlan ? planTitle : isContract ? contractTitle : documentTitle,

@@ -27,10 +27,12 @@ import { ToastContainer } from "react-toastify";
 import DocumentSetup from "./dashboard/userDashboard/DocumentSetup";
 import DocumentWorkspace from "./dashboard/userDashboard/DocumentWorkspace";
 import AuthGuard from "./components/AuthGuard";
+import PageMetadata from "./seo/PageMetadata.jsx";
 
 const App = () => {
   return (
     <BrowserRouter>
+      <PageMetadata />
       <ScrollToTop />
       <ToastContainer />
       <Routes>

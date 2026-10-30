@@ -46,6 +46,8 @@ const Footer = () => {
                 {link.label}
               </a>
             ))}
+            <a href="/about" className="text-sm text-slate-600 hover:text-indigo-700">About Ahiia.ai</a>
+            <a href="/contact" className="text-sm text-slate-600 hover:text-indigo-700">Contact</a>
           </nav>
 
           {/* socials */}

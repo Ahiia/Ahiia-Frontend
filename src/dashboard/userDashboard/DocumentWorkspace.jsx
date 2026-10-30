@@ -47,6 +47,7 @@ import {
 import { getUserProfile } from "../../services/profile.service";
 import { getBrandKit } from "../../services/brandKit.service";
 import ExportModal from "../components/ExportModal";
+import { uploadCompanyLogo } from "../../services/logo.service.js";
 import {
   resolveSectionKey,
   buildDocumentContentPayload,
@@ -919,19 +920,12 @@ const DocumentWorkspace = () => {
     if (!file) return;
     try {
       toast.info("Uploading company logo...");
-      const uploadedUrl = await uploadImageToCloudinary(file);
+      const uploadedUrl = await uploadCompanyLogo(file);
       if (uploadedUrl) {
         setCompanyProfile((prev) => ({ ...prev, logoUrl: uploadedUrl }));
         setBrandKit((prev) => ({ ...prev, logoUrl: uploadedUrl }));
         try {
           localStorage.setItem("ahiia_active_logo", uploadedUrl);
-        } catch {}
-
-        try {
-          await updateBusinessContext({ logoUrl: uploadedUrl });
-        } catch {}
-        try {
-          await updateBrandKit({ logoUrl: uploadedUrl });
         } catch {}
 
         window.dispatchEvent(
