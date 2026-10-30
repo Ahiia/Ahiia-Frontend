@@ -1,20 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { scrollToSection } from "../../utils/scrollToSection";
 import { useScrollSpy } from "../../hooks/useScrollSpy";
 import logo from "../../assets/ahiia_icon.svg";
-
-// `id` must match the id on the corresponding section wrapper in Home.jsx.
-// This same array shape can be reused for the footer nav.
-export const NAV_LINKS = [
-  { label: "Product", id: "product" },
-  { label: "How It Works", id: "how-it-works" },
-  { label: "Features", id: "features" },
-  { label: "About", id: "about" },
-];
+import { NAV_LINKS } from "./navigation";
 
 const Logo = () => (
-  <a href="#" className="flex items-center gap-2 shrink-0">
+  <a href="/" className="flex items-center gap-2 shrink-0">
     <img src={logo} alt="Logo" className="h-6 w-6" />
     <span className="text-white font-semibold text-lg tracking-tight">
       Ahiia.AI
@@ -57,6 +49,7 @@ const Header = () => {
   }, [clickedId]);
 
   const handleNavClick = (id) => (e) => {
+    if (window.location.pathname !== "/") return;
     e.preventDefault();
     setClickedId(id);
     scrollToSection(id);
@@ -80,8 +73,8 @@ const Header = () => {
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
-                href={`#${link.id}`}
-                onClick={handleNavClick(link.id)}
+                href={link.href || `/#${link.id}`}
+                onClick={link.href ? undefined : handleNavClick(link.id)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${
                   activeId === link.id
                     ? "bg-white/10 text-white"
@@ -132,8 +125,8 @@ const Header = () => {
           {NAV_LINKS.map((link) => (
             <a
               key={link.label}
-              href={`#${link.id}`}
-              onClick={handleNavClick(link.id)}
+              href={link.href || `/#${link.id}`}
+              onClick={link.href ? undefined : handleNavClick(link.id)}
               className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
                 activeId === link.id
                   ? "bg-white/10 text-white"

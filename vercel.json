@@ -1,5 +1,5 @@
 {
-  "cleanUrls": true,
+  "cleanUrls": false,
   "redirects": [{ "source": "/:path*", "has": [{ "type": "host", "value": "www.ahiia.ai" }], "destination": "https://ahiia.ai/:path*", "permanent": true }],
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
