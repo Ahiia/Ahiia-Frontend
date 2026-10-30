@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="robots" content="noindex"><title>Export logo verification</title></head>
+<body style="font:18px system-ui;max-width:900px;margin:40px auto;padding:20px">
+<h1>Export logo verification</h1><p>Uses the application's real export engine with a newly loaded SVG logo. No cached company logo is used.</p>
+<img id="logo" width="240" height="120" alt="Selected company logo">
+<p><button data-format="pdf">Export PDF</button> <button data-format="docx">Export Word</button> <button data-format="pptx">Export PowerPoint</button></p>
+<pre id="status" role="status">Ready</pre>
+<script type="module">
+import { exportToPdf, exportToDocx, exportToPptx } from '/src/services/documentExportEngine.js';
+const svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><rect x="4" y="4" width="312" height="152" rx="20" fill="#2F60FF"/><text x="160" y="100" text-anchor="middle" font-size="46" font-family="Arial" fill="white">LOGO QA</text></svg>';
+const logoUrl='data:image/svg+xml;base64,'+btoa(svg);
+document.querySelector('#logo').src=logoUrl;
+for(const button of document.querySelectorAll('button')) button.addEventListener('click',async()=>{
+  const format=button.dataset.format;
+  document.querySelector('#status').textContent='Exporting '+format;
+  try {
+    const blob=await ({pdf:exportToPdf,docx:exportToDocx,pptx:exportToPptx})[format]({
+      documentTitle:'Browser Logo Verification', documentType:format==='pptx'?'Pitch Deck':'Business Proposal',
+      styleTemplate:'Minimal', filename:'browser-logo-verification.'+format,
+      brandKit:{logoUrl,primaryColor:'#151B4D',secondaryColor:'#2F60FF'}, companyProfile:{companyName:'Logo QA Company'},
+      sections:[{title:'Executive Summary',paragraphs:['This export uses the selected SVG logo, normalized into an embedded PNG by the application.']},
+        {title:'Delivery Plan',bullets:['Verify the logo is visible.','Confirm the saved file can be reopened.']}]
+    });
+    document.querySelector('#status').textContent='PASS: '+format+' generated with '+blob.size+' bytes';
+  }catch(error){document.querySelector('#status').textContent='FAIL: '+error.message;}
+});
+</script></body></html>

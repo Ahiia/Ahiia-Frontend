@@ -11,7 +11,7 @@ import {
 import { toast } from "react-toastify";
 import { getBrandKit, updateBrandKit } from "../../services/brandKit.service";
 import { getUserProfile } from "../../services/profile.service";
-import { uploadImageToCloudinary } from "../../utils/cloudinary";
+import { uploadCompanyLogo } from "../../services/logo.service.js";
 
 const FONTS = ["Montserrat", "Inter", "Poppins", "Lora", "Source Sans Pro"];
 const PLATFORMS = [
@@ -44,7 +44,7 @@ const initials = (name) =>
 
 const BrandKit = () => {
   const [companyName, setCompanyName] = useState("");
-  const [logoUrl, setLogoUrl] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("ahiia_active_logo") || "" : ""));
+  const [logoUrl, setLogoUrl] = useState("");
   const [logoName, setLogoName] = useState("brand-logo.svg");
   const [primaryColor, setPrimaryColor] = useState("#2563EB");
   const [secondaryColor, setSecondaryColor] = useState("#131C52");
@@ -115,6 +115,7 @@ const BrandKit = () => {
 
           if (profileRes.status === "fulfilled" && profileRes.value) {
             const pData = profileRes.value.data || profileRes.value;
+            setLogoUrl(pData.logoUrl || "");
             if (pData?.companyName) {
               setCompanyName(pData.companyName);
             }
@@ -139,7 +140,7 @@ const BrandKit = () => {
     if (file) {
       setLogoName(file.name);
       try {
-        const url = await uploadImageToCloudinary(file);
+        const url = await uploadCompanyLogo(file);
         setLogoUrl(url);
       try { localStorage.setItem("ahiia_active_logo", url); } catch {}
         markDirty();
@@ -147,8 +148,7 @@ const BrandKit = () => {
         try {
           const validLinks = socialLinks
             .filter((s) => s.url && s.url.trim())
-            .map((s) => `${s.platform}: ${s.url.trim()}`)
-            .join(", ");
+            .map((s) => ({ platform: s.platform, url: s.url.trim() }));
           await updateBrandKit({
             primaryColor,
             secondaryColor,

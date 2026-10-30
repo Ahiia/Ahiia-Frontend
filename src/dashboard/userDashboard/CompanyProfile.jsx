@@ -475,8 +475,6 @@ const CompanyProfile = () => {
       setIsUploadingLogo(true);
       setLogoName(file.name);
       const uploadedUrl = await uploadImageToCloudinary(file);
-      setLogoUrl(uploadedUrl);
-      try { localStorage.setItem("ahiia_active_logo", uploadedUrl); } catch {}
       // Automatically persist logo to backend profile immediately
       try {
         const cleanCompanyName = (companyName || profileRaw?.companyName || "").trim();
@@ -506,11 +504,16 @@ const CompanyProfile = () => {
             setHasExistingProfile(true);
           } catch {}
         }
-        await updateBusinessContext(payload);
+        const savedLogoProfile = await updateBusinessContext(payload);
+        if ((savedLogoProfile.data || savedLogoProfile).logoUrl !== uploadedUrl) {
+          throw new Error("The logo was not saved to the company profile.");
+        }
+        setLogoUrl(uploadedUrl);
+        try { localStorage.setItem("ahiia_active_logo", uploadedUrl); } catch {}
         toast.success("Logo saved and applied to your profile!");
       } catch (saveErr) {
         console.warn("Auto-save logo warning:", saveErr);
-        toast.success("Logo uploaded successfully!");
+        throw new Error("The logo could not be saved to your profile. Please retry before exporting.");
       }
 
       // Auto-notify profile update with new logo

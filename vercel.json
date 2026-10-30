@@ -1,6 +1,17 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "cleanUrls": false,
+  "redirects": [{ "source": "/:path*", "has": [{ "type": "host", "value": "www.ahiia.ai" }], "destination": "https://ahiia.ai/:path*", "permanent": true }],
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/(.*)", "destination": "/app.html" }
+  ],
   "headers": [
+    { "source": "/dashboard/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] },
+    { "source": "/admin/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] },
+    { "source": "/:page(login|signup|otp|onboarding|forgot-password)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] },
+    { "source": "/reset-password/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] },
     {
       "source": "/(.*)",
       "headers": [

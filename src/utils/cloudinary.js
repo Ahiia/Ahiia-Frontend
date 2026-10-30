@@ -1,98 +1,30 @@
-/**
- * Convert any File (small KB or huge MB) into a clean, optimized data URL.
- * Automatically downscales large images (e.g. >400KB) to standard logo dimensions (max 800px)
- * so that any size logo (KB or MB) is accepted and processed smoothly.
- */
-const fileToDataUrl = (file) => {
-  return new Promise((resolve, reject) => {
-    // If it's SVG, read directly as data URL without rasterizing
-    if (
-      file.type === "image/svg+xml" ||
-      file.name?.toLowerCase().endsWith(".svg")
-    ) {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
-      return;
-    }
-
-    // For raster images (PNG, JPEG, WEBP, etc.)
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        // If image is already lightweight (< 350KB), keep original data url
-        if (file.size < 350 * 1024) {
-          return resolve(e.target.result);
-        }
-
-        // Downscale large files so any KB/MB is accepted seamlessly
-        const maxDimension = 800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
-        resolve(canvas.toDataURL(mime, 0.88));
-      };
-      img.onerror = () => resolve(e.target.result); // Fallback to raw data url
-      img.src = e.target.result;
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
-};
+import { loadExportLogo } from "../services/exportAssets.js";
 
 export const uploadImageToCloudinary = async (file) => {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-  // If Cloudinary credentials are provided, attempt cloud upload first
-  if (cloudName && uploadPreset) {
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("upload_preset", uploadPreset);
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body: data },
-      );
-      const json = await res.json();
-
-      if (res.ok && json.secure_url) {
-        return json.secure_url;
-      }
-
-      console.warn(
-        "Cloudinary upload rejected (" +
-          (json?.error?.message || "error") +
-          "), falling back to optimized local data URL.",
-      );
-    } catch (err) {
-      console.warn(
-        "Cloudinary network error, falling back to optimized local data URL:",
-        err,
-      );
+  if (!cloudName || !uploadPreset) throw new Error("Logo uploads are temporarily unavailable. Please contact support.");
+  if (!file || file.size > 8 * 1024 * 1024) throw new Error("Please choose a logo smaller than 8 MB.");
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("The logo file could not be read."));
+    reader.readAsDataURL(file);
+  });
+  const logo = await loadExportLogo(dataUrl);
+  const data = new FormData();
+  data.append("file", new Blob([logo.bytes], { type: "image/png" }), "company-logo.png");
+  data.append("upload_preset", uploadPreset);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST", body: data, signal: controller.signal,
+    });
+    const result = await response.json();
+    if (!response.ok || !result.secure_url?.startsWith("https://res.cloudinary.com/")) {
+      throw new Error("The logo could not be uploaded. Please try again.");
     }
-  }
-
-  // Resilient fallback: convert any image (KB or MB) into an optimized data URL
-  return await fileToDataUrl(file);
+    return result.secure_url;
+  } finally { clearTimeout(timeout); }
 };

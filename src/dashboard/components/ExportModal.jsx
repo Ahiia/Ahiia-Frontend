@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, Download, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
-import { exportDocument, updateDocumentStatus } from "../../services/document.service";
-import {
-  exportToPdf,
-  exportToPptx,
-  exportToDocx,
-} from "../../services/documentExportEngine";
+import { updateDocumentStatus } from "../../services/document.service";
 
 /**
  * Standard formats mapped by document type.
@@ -354,18 +349,14 @@ const ExportModal = ({
       // 2. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
       // Generates the live document with ALL user edits, latest tagline, and active logo.
       // This guarantees edits are never lost to stale backend drafts.
-      let backendExportSucceeded = false;
 
       // 3. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
       // Generates the real document content, structure, styling, and branding.
       // NEVER touches window.print() or captures any UI elements!
-      if (!backendExportSucceeded) {
+      {
         const resolvedActiveLogo =
           brandKit?.logoUrl ||
           companyProfile?.logoUrl ||
-          (typeof window !== "undefined"
-            ? localStorage.getItem("ahiia_active_logo")
-            : "") ||
           "";
 
         const resolvedActiveTagline =
@@ -402,6 +393,7 @@ const ExportModal = ({
           ],
         };
 
+        const { exportToPdf, exportToPptx, exportToDocx } = await import("../../services/documentExportEngine");
         if (selectedFormat === "PDF") {
           await exportToPdf(payload);
         } else if (selectedFormat === "PPTX") {
@@ -430,7 +422,7 @@ const ExportModal = ({
       onClose();
     } catch (err) {
       console.error("Export failed:", err);
-      toast.error("Failed to export document. Please try again.");
+      toast.error(err.message || "Failed to export document. Please try again.");
     } finally {
       setIsExporting(false);
     }

@@ -1,20 +1,18 @@
-import React from "react";
-import { HiSparkles } from "react-icons/hi2";
-import { FiLinkedin, FiInstagram, FiFacebook } from "react-icons/fi";
-import { NAV_LINKS } from "./Header";
+import { FiInstagram, FiFacebook } from "react-icons/fi";
+import { NAV_LINKS } from "./navigation";
 import { scrollToSection } from "../../utils/scrollToSection";
 import logo from "../../assets/ahiia_icon.svg";
 import { FaXTwitter } from "react-icons/fa6";
 
 const socials = [
   { icon: FaXTwitter, label: "X", href: "https://x.com/AHIIAAI?t=YJlgXjD2xRS0IjyjgGYjBQ&s=09" },
-  { icon: FiLinkedin, label: "LinkedIn", href: "https://linkedin.com/company/your_company" },
   { icon: FiInstagram, label: "Instagram", href: "https://www.instagram.com/ahiia.ai?cplk=MTh3NzBhNHhtN3ZuNw==" },
   { icon: FiFacebook, label: "Facebook", href: " https://www.facebook.com/share/19i4aWDucA/" },
 ];
 
 const Footer = () => {
   const handleNavClick = (id) => (e) => {
+    if (window.location.pathname !== "/") return;
     e.preventDefault();
     scrollToSection(id);
   };
@@ -39,13 +37,15 @@ const Footer = () => {
             {NAV_LINKS.map((link) => (
               <a
                 key={link.id}
-                href={`#${link.id}`}
-                onClick={handleNavClick(link.id)}
+                href={link.href || `/#${link.id}`}
+                onClick={link.href ? undefined : handleNavClick(link.id)}
                 className="text-sm text-slate-600 transition-colors duration-200 hover:text-slate-900"
               >
                 {link.label}
               </a>
             ))}
+            <a href="/about" className="text-sm text-slate-600 hover:text-indigo-700">About Ahiia.ai</a>
+            <a href="/contact" className="text-sm text-slate-600 hover:text-indigo-700">Contact</a>
           </nav>
 
           {/* socials */}
