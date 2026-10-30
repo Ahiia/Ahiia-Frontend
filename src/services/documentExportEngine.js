@@ -897,13 +897,15 @@ export async function exportToPdf({
       doc.text(companyProfile.companyName || "Your Company", margin + 16, cursorY + 7);
       cursorY += 18;
     }
-    doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
-    doc.rect(margin, cursorY, 6, 20, "F");
-
     doc.setTextColor(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
-    doc.text(documentTitle, margin + 10, cursorY + 8);
+    const titleLines = doc.splitTextToSize(documentTitle, contentWidth - 10);
+    const titleHeight = titleLines.length * 8;
+    const headerHeight = Math.max(20, titleHeight + 12);
+    doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
+    doc.rect(margin, cursorY, 6, headerHeight, "F");
+    doc.text(titleLines, margin + 10, cursorY + 8, { lineHeightFactor: 1.13 });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -911,10 +913,10 @@ export async function exportToPdf({
     doc.text(
       `${documentType.toUpperCase()} · ${companyProfile.companyName || "SolarTech"}`,
       margin + 10,
-      cursorY + 16
+      cursorY + titleHeight + 9
     );
 
-    cursorY += 28;
+    cursorY += headerHeight + 8;
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.5);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
