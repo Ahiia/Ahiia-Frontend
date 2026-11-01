@@ -610,7 +610,9 @@ const ExportModal = ({
                 backgroundColor: brandKit.secondaryColor || "#2563EB",
               }}
             >
-              {initials}
+              {brandKit.logoUrl || companyProfile.logoUrl ? (
+                <img src={brandKit.logoUrl || companyProfile.logoUrl} alt="Company logo" className="w-8 h-8 rounded-lg object-contain bg-white" />
+              ) : initials}
             </div>
 
             <p className="text-xs text-slate-700 leading-snug font-medium">
