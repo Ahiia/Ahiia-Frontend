@@ -48,6 +48,7 @@ import { getUserProfile } from "../../services/profile.service";
 import { getBrandKit } from "../../services/brandKit.service";
 import ExportModal from "../components/ExportModal";
 import { uploadCompanyLogo } from "../../services/logo.service.js";
+import { exportDocumentMetadata } from "../../config/exportDocumentMetadata.js";
 import {
   resolveSectionKey,
   buildDocumentContentPayload,
@@ -5453,26 +5454,8 @@ const DocumentWorkspace = () => {
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         documentId={documentId}
-        documentType={
-          isBusinessPlan
-            ? "business-plan"
-            : isSop
-              ? "sop"
-              : isContract
-                ? "contract"
-                : (navState.docType || docData?.templateType || "pitch-deck")
-        }
-        documentTypeLabel={
-          isBusinessPlan
-            ? "Business Plan"
-            : isSop
-              ? "SOP"
-              : isContract
-                ? "Contract"
-              : (navState.docType === "pitch-deck" || (!navState.docType && !isSop && docTitle.toLowerCase().includes("deck"))
-                  ? "Pitch Deck"
-                  : (navState.docType === "sop" ? "SOP" : "Proposal"))
-        }
+        documentType={exportDocumentMetadata(docData, navState.docType).type}
+        documentTypeLabel={exportDocumentMetadata(docData, navState.docType).label}
         documentTitle={docTitle}
         currentStyle={styleTemplate}
         onStyleChange={handleSelectStyle}
