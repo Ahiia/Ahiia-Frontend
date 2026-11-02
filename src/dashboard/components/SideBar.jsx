@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FileText,
   FilePlus2,
+  CreditCard,
   BarChart3,
   Building2,
   Sparkles,
@@ -48,6 +49,7 @@ export const DEFAULT_USER_NAV_ITEMS = [
 ];
 
 export const DEFAULT_USER_BOTTOM_NAV_ITEMS = [
+  { name: "Plans & Billing", to: "/dashboard/billing", icon: CreditCard },
   {
     name: "Settings",
     to: "/dashboard/settings",

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { PUBLIC_PAGES, pageMetadata, structuredData } from "../src/seo/pageMetadata.js";
 
 test("public pages have distinct, indexable titles and canonical URLs", () => {
-  assert.equal(new Set(Object.values(PUBLIC_PAGES).map((page) => page.title)).size, 3);
+  assert.equal(new Set(Object.values(PUBLIC_PAGES).map((page) => page.title)).size, Object.keys(PUBLIC_PAGES).length);
   for (const path of Object.keys(PUBLIC_PAGES)) {
     assert.match(pageMetadata(path).robots, /^index,/);
     assert.equal(new URL(pageMetadata(path).canonical).host, "ahiia.ai");
