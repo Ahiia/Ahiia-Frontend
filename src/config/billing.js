@@ -4,6 +4,9 @@ export const PRO_CURRENCY = "NGN";
 // Updating this price requires a new matching Paystack plan and a coordinated API/UI release.
 export const PRO_AMOUNT_MINOR = 1346257;
 export const PRO_PRICE_LABEL = "₦13,462.57";
+// Observed local-card checkout, not a guaranteed fee for every card or future renewal.
+export const PRO_CHECKOUT_EXAMPLE_LABEL = "₦13,769.11";
+export const PRO_FEE_NOTICE = "Paystack processing fees are added at checkout. The final total may vary by card and is shown before you pay.";
 export const PRO_RATE_DATE = "30 October 2026";
 export const DOCUMENT_ACCESS = [
   { type: "Proposal", slug: "business-proposal", label: "Business Proposals", free: true },

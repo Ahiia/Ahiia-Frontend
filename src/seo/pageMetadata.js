@@ -2,7 +2,7 @@ export const SITE_URL = "https://ahiia.ai";
 export const PUBLIC_PAGES = {
   "/pricing": {
     title: "Ahiia.ai Pricing | Free Proposals & $10 Monthly Pro",
-    description: "Create Business Proposals for free. Unlock all six business document types with Ahiia Pro at ₦13,462.57 monthly, the $10 equivalent. Secure checkout with Paystack.",
+    description: "Create Business Proposals for free. Unlock all six business document types with Ahiia Pro at ₦13,462.57 monthly plus Paystack processing fees. See the total before paying.",
   },
   "/": {
     title: "Ahiia.ai | AI Business Proposals, Plans & Documents",

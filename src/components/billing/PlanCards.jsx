@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Check, FileText, Sparkles } from "lucide-react";
-import { DOCUMENT_ACCESS, PRO_PRICE, PRO_PRICE_LABEL } from "../../config/billing";
+import { DOCUMENT_ACCESS, PRO_CHECKOUT_EXAMPLE_LABEL, PRO_FEE_NOTICE, PRO_PRICE, PRO_PRICE_LABEL } from "../../config/billing";
 import "./billing.css";
 
 export default function PlanCards({ dashboard = false, pro = false, busy = false, checkoutAvailable = true, onUpgrade }) {
@@ -18,6 +18,7 @@ export default function PlanCards({ dashboard = false, pro = false, busy = false
       <div className="ahiia-plan-top"><span className="ahiia-plan-icon"><Sparkles size={21} /></span><span className="ahiia-pro-badge">THE COMPLETE TOOLKIT</span></div>
       <h2>Pro</h2><p className="ahiia-plan-description">From your first pitch to your daily operations. One plan.</p>
       <p className="ahiia-plan-price ahiia-plan-price-naira">{PRO_PRICE_LABEL}<span> / month</span></p><p className="ahiia-price-note">≈ US${PRO_PRICE} · Charged in NGN · Cancel renewal anytime</p>
+      <p className="ahiia-price-note">Plus processing fees. Current local-card checkout: {PRO_CHECKOUT_EXAMPLE_LABEL} total.</p><p className="ahiia-price-note">{PRO_FEE_NOTICE}</p>
       <div className="ahiia-plan-rule" />
       <p className="ahiia-feature-eyebrow">Everything in Free, plus</p>
       <ul className="ahiia-plan-features">{DOCUMENT_ACCESS.filter((item) => !item.free).map((item) => <li key={item.type}><Check size={17} />{item.label}</li>)}</ul>
