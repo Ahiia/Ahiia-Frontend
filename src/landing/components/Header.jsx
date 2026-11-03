@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { scrollToSection } from "../../utils/scrollToSection";
 import { useScrollSpy } from "../../hooks/useScrollSpy";
 import logo from "../../assets/ahiia_icon.svg";
@@ -15,6 +16,7 @@ const Logo = () => (
 );
 
 const Header = () => {
+  const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -23,7 +25,7 @@ const Header = () => {
   // ...but a click sets it immediately, so the highlight doesn't lag
   // behind while the smooth scroll animation is still in flight.
   const [clickedId, setClickedId] = useState(null);
-  const activeId = clickedId ?? spyActiveId;
+  const activeId = NAV_LINKS.find((link) => link.href === pathname)?.id ?? clickedId ?? spyActiveId;
 
   // Solidify the header once the page scrolls, keep it transparent at the very top
   useEffect(() => {

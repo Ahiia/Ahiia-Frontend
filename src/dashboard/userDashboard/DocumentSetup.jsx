@@ -26,6 +26,8 @@ import {
 import SetupFooter from "../components/document-setup/SetupFooter";
 import OptionalInformation from "../components/document-setup/OptionalInformation";
 import GenerateModal from "../components/document-setup/GenerateModal";
+import { useBilling } from "../../hooks/useBilling";
+import { canCreateDocument, PRO_PRICE_LABEL } from "../../config/billing";
 import SetupSidebar from "../components/document-setup/SetupSidebar";
 import {
   FORM_REGISTRY,
@@ -35,6 +37,7 @@ import {
 const DocumentSetup = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
+  const { billing, loading: billingLoading, error: billingError } = useBilling();
 
   const template = getTemplate(templateId);
   const registryEntry =
@@ -744,6 +747,16 @@ const DocumentSetup = () => {
         </div>
       </div>
     );
+  }
+
+  if (!canCreateDocument(billing, templateId)) {
+    return <div className="max-w-xl mx-auto py-16 text-center space-y-5">
+      <Sparkles className="w-10 h-10 text-violet-600 mx-auto" />
+      <h1 className="text-3xl font-black text-[#171c43]">{billingLoading ? "Checking your plan…" : billingError ? "We couldn’t confirm your plan" : `${template.title} is included in Pro`}</h1>
+      <p className="text-slate-500 leading-relaxed">{billingLoading ? "Your document tools will be ready in a moment." : billingError || `Unlock all six document types for ${PRO_PRICE_LABEL} per month plus Paystack processing fees. The base price is the $10 equivalent. Your final total is shown before payment. Business Proposals remain free.`}</p>
+      {!billingLoading && !billingError && <Link to="/dashboard/billing" className="inline-block rounded-xl bg-[#191b40] text-white px-6 py-3 font-bold">Explore Pro</Link>}
+      <Link to="/dashboard/create-document/business-proposal" className="block text-sm underline text-violet-700">Create a free Business Proposal</Link>
+    </div>;
   }
 
   return (

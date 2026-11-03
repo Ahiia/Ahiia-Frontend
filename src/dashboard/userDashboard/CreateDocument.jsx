@@ -15,6 +15,8 @@ import {
 import { getBlueprints } from "../../services/document.service";
 import { getUserProfile } from "../../services/profile.service";
 import { TEMPLATES } from "../../config/documentTemplates";
+import { useBilling } from "../../hooks/useBilling";
+import { canCreateDocument } from "../../config/billing";
 
 // ---------------------------------------------------------------------------
 // Icon lookup by slug – the API doesn't return icons so we map them locally.
@@ -44,6 +46,7 @@ const SkeletonCard = () => (
 
 const CreateDocument = () => {
   const navigate = useNavigate();
+  const { billing, loading: billingLoading, error: billingError } = useBilling();
   const [selectedSlug, setSelectedSlug] = useState(null);
   const [blueprints, setBlueprints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,6 +124,10 @@ const CreateDocument = () => {
 
   const handleContinue = () => {
     if (!selected) return;
+    if (!canCreateDocument(billing, selected.slug)) {
+      if (!billingLoading && !billingError) navigate("/dashboard/billing");
+      return;
+    }
     navigate(`/dashboard/create-document/${selected.slug}`);
   };
 
@@ -159,6 +166,7 @@ const CreateDocument = () => {
       </div>
 
       {/* Error state */}
+      {billingError && <div role="alert" className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-900">{billingError} Business Proposals are still available for free.</div>}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-600 font-medium">
           {error}
@@ -180,7 +188,7 @@ const CreateDocument = () => {
                   type="button"
                   onClick={() => setSelectedSlug(blueprint.slug)}
                   onDoubleClick={() =>
-                    navigate(`/dashboard/create-document/${blueprint.slug}`)
+                    canCreateDocument(billing, blueprint.slug) ? navigate(`/dashboard/create-document/${blueprint.slug}`) : !billingLoading && !billingError && navigate("/dashboard/billing")
                   }
                   aria-pressed={isSelected}
                   className={`relative text-left bg-white rounded-3xl p-5 sm:p-6 border shadow-xs transition-all duration-150 cursor-pointer group ${
@@ -216,6 +224,7 @@ const CreateDocument = () => {
                   <h3 className="text-base font-bold text-slate-900 pr-6">
                     {blueprint.label}
                   </h3>
+                  {!canCreateDocument(billing, blueprint.slug) && <span className="inline-block text-[10px] font-bold tracking-wide text-violet-700 bg-violet-50 px-2 py-1 rounded-md mt-2">PRO DOCUMENT</span>}
                   <p className="text-xs text-slate-500 mt-1.5 leading-relaxed pr-6">
                     {blueprint.description}
                   </p>
@@ -251,14 +260,14 @@ const CreateDocument = () => {
         <button
           type="button"
           onClick={handleContinue}
-          disabled={!selected}
+          disabled={!selected || (!canCreateDocument(billing, selected?.slug) && (billingLoading || Boolean(billingError)))}
           className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all ${
             selected
               ? "bg-[#131B4D] hover:bg-[#1B2666] text-white active:scale-[0.98] cursor-pointer"
               : "bg-slate-200 text-slate-400 cursor-not-allowed"
           }`}
         >
-          Continue
+          {selected && !canCreateDocument(billing, selected.slug) ? billingLoading ? "Checking plan…" : "Unlock with Pro" : "Continue"}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

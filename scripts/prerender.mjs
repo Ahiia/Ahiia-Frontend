@@ -25,4 +25,4 @@ for (const path of Object.keys(PUBLIC_PAGES)) {
   if (!html.includes("<h1") || !html.includes(page.canonical)) throw new Error(`Invalid prerendered public page: ${path}`);
   await writeFile(path === "/" ? "dist/index.html" : `dist${path}.html`, html);
 }
-console.log("Prerendered homepage, about and contact pages with route-specific metadata.");
+console.log("Prerendered public pages with route-specific metadata, including pricing.");

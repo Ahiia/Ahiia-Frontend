@@ -28,6 +28,8 @@ import DocumentSetup from "./dashboard/userDashboard/DocumentSetup";
 import DocumentWorkspace from "./dashboard/userDashboard/DocumentWorkspace";
 import AuthGuard from "./components/AuthGuard";
 import PageMetadata from "./seo/PageMetadata.jsx";
+import Pricing from "./landing/pages/Pricing";
+import Billing from "./dashboard/userDashboard/Billing";
 
 const App = () => {
   return (
@@ -65,6 +67,8 @@ const App = () => {
           <Route path="analytics" element={<Analytics />} />
           <Route path="company-profile" element={<CompanyProfile />} />
           <Route path="brand-kit" element={<BrandKit />} />
+          <Route path="billing" element={<Billing />} />
+          <Route path="billing/return" element={<Billing />} />
 
           {/* Settings — landing holds the tab navlinks, children render in its Outlet */}
           <Route path="settings" element={<SettingsLanding />}>
@@ -94,6 +98,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Route>
       </Routes>
     </BrowserRouter>
