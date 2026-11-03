@@ -6,7 +6,7 @@ export default function AuthGuard({ children, role }) {
   const location = useLocation();
 
   if (!cookies.accessToken) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search + location.hash }} />;
   }
 
   if (role) {
