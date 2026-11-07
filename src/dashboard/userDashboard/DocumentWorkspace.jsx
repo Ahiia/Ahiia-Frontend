@@ -46,6 +46,7 @@ import {
 } from "../../services/document.service";
 import { getUserProfile } from "../../services/profile.service";
 import { getBrandKit } from "../../services/brandKit.service";
+import { pushNotification } from "../../services/notification.service";
 import ExportModal from "../components/ExportModal";
 import { uploadCompanyLogo } from "../../services/logo.service.js";
 import { exportDocumentMetadata } from "../../config/exportDocumentMetadata.js";
@@ -1048,6 +1049,13 @@ const DocumentWorkspace = () => {
 
       if (isManual) {
         toast.success("Document saved successfully");
+        pushNotification({
+          title: "Document Saved",
+          message: `Saved latest changes to "${title || docTitle || "Untitled Document"}".`,
+          type: "document_saved",
+          link: `/dashboard/documents/${documentId}`,
+          dedupeKey: `doc-saved-${documentId}`,
+        });
       }
       return true;
     } catch (err) {
@@ -1677,6 +1685,15 @@ const DocumentWorkspace = () => {
       setSections(updatedSections);
       setRevisionCount((prev) => prev + 1);
       setAiAssistantPrompt("");
+      pushNotification({
+        title: "AI Edit Applied",
+        message: targetSec
+          ? `Refined "${targetSec.title}" in "${docTitle || "Document"}".`
+          : `Applied AI revisions across "${docTitle || "Document"}".`,
+        type: "ai_edit",
+        link: `/dashboard/documents/${documentId}`,
+        dedupeKey: `ai-edit-${documentId}`,
+      });
 
       // Persist the actual AI generated updates immediately to document content storage
       await persistContent(updatedSections, docTitle, styleTemplate, false);
@@ -2130,7 +2147,7 @@ const DocumentWorkspace = () => {
 
             {/* Document Style Popover Menu */}
             {showStyleMenu && (
-              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-40 animate-in fade-in zoom-in-95 duration-150">
+              <div className="fixed inset-x-3 top-24 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-h-[80vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="mb-4">
                   <h3 className="text-sm font-black text-slate-800">
                     Document Style
@@ -2384,7 +2401,7 @@ const DocumentWorkspace = () => {
                 </div>
 
                 {/* Thumbnails list */}
-                <div className="space-y-3.5 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                <div className="flex xl:flex-col gap-3 xl:gap-0 xl:space-y-3.5 overflow-x-auto xl:overflow-x-visible xl:max-h-[calc(100vh-220px)] xl:overflow-y-auto pb-2 xl:pb-0 pr-1 no-scrollbar">
                 {sections.map((slide, sIdx) => {
                   const isActive = sIdx === safeSlideIndex;
                   const slideNumberStr = String(sIdx + 1).padStart(2, "0");
@@ -2397,7 +2414,7 @@ const DocumentWorkspace = () => {
                         : slide.title || `Slide ${sIdx + 1}`);
 
                   return (
-                    <div key={slide.id || `thumb-${sIdx}`} className="space-y-1.5">
+                    <div key={slide.id || `thumb-${sIdx}`} className="space-y-1.5 w-44 sm:w-52 xl:w-full shrink-0">
                       <div className="flex items-start gap-2.5">
                         <span className="text-xs font-bold text-slate-400 mt-1 w-5 shrink-0">
                           {slideNumberStr}
@@ -3192,7 +3209,7 @@ const DocumentWorkspace = () => {
 
           {/* 3. RIGHT COLUMN: AI ASSISTANT PANEL */}
           {showAiAssistant && !isPreviewMode && (
-            <div className="w-full xl:w-96 shrink-0 transition-all">
+            <div className="fixed inset-x-0 bottom-0 z-50 p-3 bg-slate-900/40 backdrop-blur-xs xl:static xl:p-0 xl:bg-transparent xl:backdrop-blur-none w-full xl:w-96 shrink-0 transition-all">
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sticky top-6 space-y-4">
                 <div className="flex items-start justify-between pb-2 border-b border-slate-100">
                   <div>
@@ -3316,7 +3333,7 @@ const DocumentWorkspace = () => {
             className={`bg-white rounded-2xl shadow-sm border border-slate-200/90 w-full p-6 sm:p-10 lg:p-14 transition-all duration-300 ${
               styleTemplate === "Minimal"
                 ? "font-sans border-slate-100"
-                : styleTemplate === "Creative" || (isContract && styleTemplate !== "Minimal")
+                : styleTemplate === "Creative"
                   ? "overflow-hidden font-sans"
                   : "font-sans"
             }`}
@@ -3346,7 +3363,7 @@ const DocumentWorkspace = () => {
                   ))}
                 </div>
               </div>
-            ) : isContract && styleTemplate !== "Minimal" ? (
+            ) : isContract && styleTemplate === "Creative" ? (
               /* ==================================================================== */
               /* CONTRACT SIGNATURE COVER BANNER (Matches Reference Design)           */
               /* ==================================================================== */
@@ -3467,7 +3484,7 @@ const DocumentWorkspace = () => {
                       Marketing Plan
                     </p>
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
-                      {docTitle && docTitle.toLowerCase().includes("plan")
+                      {docTitle && (docTitle.toLowerCase().includes("plan") || /20\d\d/.test(docTitle))
                         ? docTitle.toUpperCase()
                         : `${(docTitle || "MARKETING PLAN").toUpperCase()} 2026`}
                     </h1>
@@ -3501,14 +3518,22 @@ const DocumentWorkspace = () => {
                   {/* Top Row: Brand Info on Left, "Marketing Plan" on Right */}
                   <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                     <div className="flex items-center gap-3.5">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
-                        style={{
-                          backgroundColor: brandKit.secondaryColor || "#2563EB",
-                        }}
-                      >
-                        {companyInitials}
-                      </div>
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={companyProfile.companyName || "Logo"}
+                          className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200"
+                        />
+                      ) : (
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md shrink-0"
+                          style={{
+                            backgroundColor: brandKit.secondaryColor || "#2563EB",
+                          }}
+                        >
+                          {companyInitials}
+                        </div>
+                      )}
                       <div>
                         <h2 className="text-sm font-bold text-slate-900 leading-tight">
                           {companyProfile.companyName || "Your Company"}
@@ -3526,7 +3551,7 @@ const DocumentWorkspace = () => {
                   {/* Title */}
                   <div className="pt-2">
                     <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase">
-                      {docTitle && docTitle.toLowerCase().includes("plan")
+                      {docTitle && (docTitle.toLowerCase().includes("plan") || /20\d\d/.test(docTitle))
                         ? docTitle.toUpperCase()
                         : `${(docTitle || "MARKETING PLAN").toUpperCase()} 2026`}
                     </h1>
@@ -3581,7 +3606,7 @@ const DocumentWorkspace = () => {
                       Marketing Plan
                     </p>
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight uppercase mb-2">
-                      {docTitle && docTitle.toLowerCase().includes("plan")
+                      {docTitle && (docTitle.toLowerCase().includes("plan") || /20\d\d/.test(docTitle))
                         ? docTitle.toUpperCase()
                         : `${(docTitle || "MARKETING PLAN").toUpperCase()} 2026`}
                     </h1>
@@ -4055,10 +4080,145 @@ const DocumentWorkspace = () => {
                   </div>
                 </div>
               )
+            ) : styleTemplate === "Corporate" ? (
+              /* ==================================================================== */
+              /* CORPORATE BUSINESS PROPOSAL COVER (Structured Executive Header)      */
+              /* ==================================================================== */
+              <div className="space-y-6 pb-6 border-b-2 border-slate-900 mb-8">
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div
+                      onClick={() => logoFileInputRef.current?.click()}
+                      title="Click to upload or change logo"
+                      className="relative group cursor-pointer shrink-0"
+                    >
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={companyProfile.companyName || "Logo"}
+                          id="workspace-company-logo"
+                          className="w-11 h-11 rounded-xl object-contain bg-white p-1 shadow-xs shrink-0 border border-slate-200 group-hover:border-blue-400 transition-all"
+                        />
+                      ) : (
+                        <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-sm shrink-0 group-hover:opacity-90 transition-all"
+                          style={{
+                            backgroundColor: brandKit.secondaryColor || "#2563EB",
+                          }}
+                        >
+                          {companyInitials}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
+                        📷
+                      </div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-extrabold text-slate-900 leading-tight truncate">
+                        {companyProfile.companyName || "Your Company"}
+                      </h2>
+                      {isEditingTagline ? (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editableTagline}
+                            onChange={(e) => setEditableTagline(e.target.value)}
+                            onBlur={() => handleSaveTagline(editableTagline)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveTagline(editableTagline);
+                              if (e.key === "Escape") setIsEditingTagline(false);
+                            }}
+                            placeholder="Enter tagline..."
+                            className="text-xs px-2 py-0.5 rounded-md border border-blue-400 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[260px]"
+                          />
+                        </div>
+                      ) : (
+                        <p
+                          onClick={() => {
+                            setEditableTagline(
+                              brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline)
+                                ? brandKit.tagline
+                                : ""
+                            );
+                            setIsEditingTagline(true);
+                          }}
+                          title="Click to edit tagline"
+                          className="text-xs text-slate-500 mt-0.5 hover:text-blue-600 hover:underline cursor-pointer flex items-center gap-1 group"
+                        >
+                          <span className="truncate">
+                            {(brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline)
+                              ? brandKit.tagline
+                              : "") || "Click to add tagline..."}
+                          </span>
+                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-500 font-semibold transition-opacity shrink-0">
+                            ✎ Edit
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border shrink-0"
+                    style={{
+                      color: brandKit.secondaryColor || "#2563EB",
+                      borderColor: `${brandKit.secondaryColor || "#2563EB"}30`,
+                      backgroundColor: `${brandKit.secondaryColor || "#2563EB"}10`,
+                    }}
+                  >
+                    {navState.docType || docData?.documentType || "Business Proposal"}
+                  </span>
+                </div>
+
+                {/* Corporate Accent Bar + Document Title */}
+                <div className="flex items-stretch gap-3.5 pt-1">
+                  <div
+                    className="w-1.5 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: brandKit.secondaryColor || "#2563EB",
+                    }}
+                  />
+                  <div>
+                    <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase leading-tight">
+                      {docTitle || "\u00A0"}
+                    </h1>
+                    <p
+                      className="text-xs font-bold uppercase tracking-wider mt-1.5"
+                      style={{ color: brandKit.secondaryColor || "#2563EB" }}
+                    >
+                      {(navState.docType || docData?.documentType || "Business Proposal").toUpperCase()} · {companyProfile.companyName || "Your Company"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Corporate Structured Metadata Box */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/90 rounded-xl p-4 border border-slate-200/80">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Prepared for
+                    </p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {companyProfile.preparedFor || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Prepared by
+                    </p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {companyProfile.preparedBy || companyProfile.companyName || "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : (
+              /* ==================================================================== */
+              /* MINIMAL BUSINESS PROPOSAL COVER (Clean & Airy Editorial Layout)      */
+              /* ==================================================================== */
               <>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     {/* Interactive Click-to-Upload Logo Badge */}
                     <div
                       onClick={() => logoFileInputRef.current?.click()}
@@ -4086,8 +4246,8 @@ const DocumentWorkspace = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <h2 className="text-sm font-extrabold text-slate-900 leading-tight">
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-extrabold text-slate-900 leading-tight truncate">
                         {companyProfile.companyName || "Your Company"}
                       </h2>
 
@@ -4105,7 +4265,7 @@ const DocumentWorkspace = () => {
                               if (e.key === "Escape") setIsEditingTagline(false);
                             }}
                             placeholder="Enter tagline..."
-                            className="text-xs px-2 py-0.5 rounded-md border border-blue-400 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[280px]"
+                            className="text-xs px-2 py-0.5 rounded-md border border-blue-400 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[260px]"
                           />
                         </div>
                       ) : (
@@ -4121,34 +4281,37 @@ const DocumentWorkspace = () => {
                           title="Click to edit tagline"
                           className="text-xs text-slate-400 mt-0.5 hover:text-blue-600 hover:underline cursor-pointer flex items-center gap-1 group"
                         >
-                          <span>
+                          <span className="truncate">
                             {(brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline)
                               ? brandKit.tagline
                               : "") || "Click to add tagline..."}
                           </span>
-                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-500 font-semibold transition-opacity">
+                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-blue-500 font-semibold transition-opacity shrink-0">
                             ✎ Edit
                           </span>
                         </p>
                       )}
                     </div>
                   </div>
-                  <span className="text-xs font-semibold text-slate-400 tracking-wide">
+                  <span className="text-xs font-semibold text-slate-400 tracking-wide shrink-0">
                     {navState.docType || docData?.documentType || "Business Proposal"}
                   </span>
                 </div>
 
                 {/* Document Title */}
-                <div className="mt-8 mb-6">
-                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase">
+                <div className="mt-7 sm:mt-8 mb-6">
+                  <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mb-1.5">
+                    {navState.docType || docData?.documentType || "Business Proposal"}
+                  </p>
+                  <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight uppercase">
                     {docTitle || "\u00A0"}
                   </h1>
                 </div>
 
                 {/* Metadata Grid: Prepared for / Prepared by */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
                   <div>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">
                       Prepared for
                     </p>
                     <p className="text-sm font-bold text-slate-900">
@@ -4156,7 +4319,7 @@ const DocumentWorkspace = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">
                       Prepared by
                     </p>
                     <p className="text-sm font-bold text-slate-900">
@@ -5194,8 +5357,8 @@ const DocumentWorkspace = () => {
         {/* RIGHT COLUMN: AI ASSISTANT PANEL (Matching Reference Image)        */}
         {/* ================================================================== */}
         {showAiAssistant && (
-          <div className="w-full lg:w-[330px] xl:w-[350px] shrink-0 sticky top-24 animate-in fade-in slide-in-from-right-4 duration-200">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-5">
+          <div className="fixed inset-x-0 bottom-0 z-50 p-3 bg-slate-900/40 backdrop-blur-xs lg:static lg:p-0 lg:bg-transparent lg:backdrop-blur-none w-full lg:w-[330px] xl:w-[350px] shrink-0 lg:sticky lg:top-24 animate-in fade-in slide-in-from-bottom-4 lg:slide-in-from-right-4 duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl lg:shadow-sm border border-slate-200/80 p-4 sm:p-5 space-y-4 sm:space-y-5 max-h-[80vh] lg:max-h-none overflow-y-auto">
               {/* Panel Header */}
               <div className="flex items-start justify-between">
                 <div>
@@ -5394,7 +5557,7 @@ const DocumentWorkspace = () => {
       {/* 3. FLOATING BOTTOM BRAND KIT DOCK                                    */}
       {/* ==================================================================== */}
       <div className="flex flex-col items-center justify-center gap-2 pt-4">
-        <div className="inline-flex items-center gap-3.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-md text-xs">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3.5 px-3.5 sm:px-4 py-2.5 sm:py-2 rounded-2xl sm:rounded-full bg-white border border-slate-200/90 shadow-md text-xs max-w-full">
           {activeLogo ? (
             <img
               src={activeLogo}

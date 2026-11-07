@@ -8,9 +8,6 @@ import {
   Loader2,
   Building2,
   Check,
-  AlertCircle,
-  Sparkles,
-  ExternalLink,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
@@ -22,6 +19,7 @@ import {
   createAiProfile,
 } from "../../services/profile.service";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
+import { pushNotification } from "../../services/notification.service";
 
 const INDUSTRIES = [
   "Financial services",
@@ -304,6 +302,7 @@ const CompanyProfile = () => {
 
   const updateSection = async (id, body) => {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, body } : s)));
+    const secTitle = sections.find((s) => s.id === id)?.title || id;
     try {
       if (!hasExistingProfile) {
         if (companyName.trim()) {
@@ -329,6 +328,13 @@ const CompanyProfile = () => {
       }
       await updateUserProfile(id, "update", body);
       toast.success("Section updated successfully!");
+      pushNotification({
+        title: "Profile Section Updated",
+        message: `Updated "${secTitle}" in your Company Profile.`,
+        type: "profile_updated",
+        link: "/dashboard/company-profile",
+        dedupeKey: `profile-sec-${id}`,
+      });
       // Broadcast update to header and overview
       window.dispatchEvent(
         new CustomEvent("ahiia:profile-updated", {
@@ -447,6 +453,13 @@ const CompanyProfile = () => {
         }
       }
       toast.success("Company profile saved successfully!");
+      pushNotification({
+        title: "Company Profile Saved",
+        message: `${cleanCompanyName} (${cleanIndustry}) business context updated.`,
+        type: "profile_updated",
+        link: "/dashboard/company-profile",
+        dedupeKey: "profile-save",
+      });
 
       // Dispatch event to update Header and Overview in real-time
       window.dispatchEvent(
@@ -511,6 +524,13 @@ const CompanyProfile = () => {
         setLogoUrl(uploadedUrl);
         try { localStorage.setItem("ahiia_active_logo", uploadedUrl); } catch {}
         toast.success("Logo saved and applied to your profile!");
+        pushNotification({
+          title: "Company Logo Updated",
+          message: `Uploaded "${file.name}" to your Company Profile.`,
+          type: "profile_updated",
+          link: "/dashboard/company-profile",
+          dedupeKey: "profile-logo",
+        });
       } catch (saveErr) {
         console.warn("Auto-save logo warning:", saveErr);
         throw new Error("The logo could not be saved to your profile. Please retry before exporting.");
@@ -547,11 +567,11 @@ const CompanyProfile = () => {
   }, [industry]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-xs font-bold text-blue-600 tracking-wider">
               Profile Setup
             </span>
@@ -562,10 +582,10 @@ const CompanyProfile = () => {
               </span>
             )}
           </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Company Profile
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Keep your business information up to date so Ahiia can create more
             relevant documents.
           </p>
@@ -574,7 +594,7 @@ const CompanyProfile = () => {
           type="button"
           onClick={handleSaveChanges}
           disabled={saving || loading}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#131B4D] hover:bg-[#1B2666] active:scale-[0.98] text-white font-bold text-sm shadow-xs transition-all disabled:opacity-70 disabled:cursor-wait shrink-0 cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl bg-[#131B4D] hover:bg-[#1B2666] active:scale-[0.98] text-white font-bold text-sm shadow-xs transition-all disabled:opacity-70 disabled:cursor-wait shrink-0 cursor-pointer"
         >
           {saving ? (
             <>
@@ -593,8 +613,8 @@ const CompanyProfile = () => {
       </div>
 
       {/* Completeness bar & missing fields reminder */}
-      <div className="bg-white px-5 sm:px-6 py-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-2.5">
-        <div className="flex items-center gap-4">
+      <div className="bg-white px-4 sm:px-6 py-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-2.5">
+        <div className="flex items-center gap-3 sm:gap-4">
           <span className="text-xs font-bold text-slate-500 whitespace-nowrap">
             Profile completeness
           </span>
@@ -627,9 +647,9 @@ const CompanyProfile = () => {
       </div>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
         {/* Business information */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+        <div className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-sm font-black text-slate-900">
               Business information
@@ -763,7 +783,7 @@ const CompanyProfile = () => {
         </div>
 
         {/* Business profile sections */}
-        <div className="lg:col-span-3 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+        <div className="lg:col-span-3 bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
           <h3 className="text-sm font-black text-slate-900">
             Business Profile
           </h3>

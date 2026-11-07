@@ -539,7 +539,7 @@ export async function exportToPdf({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(15);
       doc.setTextColor(255, 255, 255);
-      const planTitle = documentTitle && documentTitle.toLowerCase().includes("plan")
+      const planTitle = documentTitle && (documentTitle.toLowerCase().includes("plan") || /20\d\d/.test(documentTitle))
         ? documentTitle.toUpperCase()
         : `${(documentTitle || "MARKETING PLAN").toUpperCase()} 2026`;
       doc.text(planTitle, margin, 31);
@@ -603,7 +603,7 @@ export async function exportToPdf({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(15, 23, 42);
-      const planTitle = documentTitle && documentTitle.toLowerCase().includes("plan")
+      const planTitle = documentTitle && (documentTitle.toLowerCase().includes("plan") || /20\d\d/.test(documentTitle))
         ? documentTitle.toUpperCase()
         : `${(documentTitle || "MARKETING PLAN").toUpperCase()} 2026`;
       doc.text(planTitle, margin, cursorY);
@@ -658,7 +658,7 @@ export async function exportToPdf({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(17);
       doc.setTextColor(15, 23, 42);
-      const planTitle = documentTitle && documentTitle.toLowerCase().includes("plan")
+      const planTitle = documentTitle && (documentTitle.toLowerCase().includes("plan") || /20\d\d/.test(documentTitle))
         ? documentTitle.toUpperCase()
         : `${(documentTitle || "MARKETING PLAN").toUpperCase()} 2026`;
       doc.text(planTitle, margin, cursorY);
@@ -889,38 +889,74 @@ export async function exportToPdf({
 
     cursorY = 52;
   } else if (styleTemplate === "Corporate") {
-    if (logo) {
-      drawPdfLogo(doc, logo, margin, cursorY, 12);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...primaryRgb);
-      doc.text(companyProfile.companyName || "Your Company", margin + 16, cursorY + 7);
-      cursorY += 18;
-    }
+    drawBadgeOrLogo(margin, cursorY, 10, 2);
+
     doc.setTextColor(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    const titleLines = doc.splitTextToSize(documentTitle, contentWidth - 10);
-    const titleHeight = titleLines.length * 8;
-    const headerHeight = Math.max(20, titleHeight + 12);
-    doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
-    doc.rect(margin, cursorY, 6, headerHeight, "F");
-    doc.text(titleLines, margin + 10, cursorY + 8, { lineHeightFactor: 1.13 });
+    doc.setFontSize(10.5);
+    doc.text(companyProfile.companyName || "Your Company", margin + 13, cursorY + 4.5);
+
+    const safeCorpTagline =
+      (brandKit.tagline && !/clean\s+power/i.test(brandKit.tagline) ? brandKit.tagline : "") ||
+      (typeof window !== "undefined" ? localStorage.getItem("ahiia_brand_tagline") || "" : "");
+
+    if (safeCorpTagline) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(safeCorpTagline, margin + 13, cursorY + 8.5);
+    }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(7.5);
+    doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]);
+    doc.text((documentType || "BUSINESS PROPOSAL").toUpperCase(), pageWidth - margin, cursorY + 5, { align: "right" });
+
+    cursorY += 14;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 6;
+
+    doc.setTextColor(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    const titleLines = doc.splitTextToSize(documentTitle.toUpperCase(), contentWidth - 10);
+    const titleHeight = titleLines.length * 7.5;
+    const headerHeight = Math.max(18, titleHeight + 10);
+    doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
+    doc.rect(margin, cursorY, 4, headerHeight, "F");
+    doc.text(titleLines, margin + 8, cursorY + 7, { lineHeightFactor: 1.13 });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
     doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]);
     doc.text(
-      `${documentType.toUpperCase()} · ${companyProfile.companyName || "SolarTech"}`,
-      margin + 10,
-      cursorY + titleHeight + 9
+      `${(documentType || "BUSINESS PROPOSAL").toUpperCase()} · ${companyProfile.companyName || "Your Company"}`,
+      margin + 8,
+      cursorY + titleHeight + 7.5
     );
 
-    cursorY += headerHeight + 8;
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
+    cursorY += headerHeight + 7;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text("PREPARED FOR", margin, cursorY);
+    doc.text("PREPARED BY", pageWidth / 2, cursorY);
+    cursorY += 4.5;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(companyProfile.preparedFor || "The Client", margin, cursorY);
+    doc.text(companyProfile.preparedBy || companyProfile.companyName || "Your Company", pageWidth / 2, cursorY);
+    cursorY += 6;
+
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.8);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 8;
+    cursorY += 9;
   } else {
     // ========================================================================
     // MINIMAL HEADER (Faithfully renders Logo, Company Name, Tagline & Details)
@@ -2453,7 +2489,7 @@ export async function exportToDocx({
 
   const planTitle =
     isMarketingPlan &&
-    (documentTitle.toLowerCase().includes("plan")
+    (documentTitle.toLowerCase().includes("plan") || /20\d\d/.test(documentTitle)
       ? documentTitle.toUpperCase()
       : `${(documentTitle || "MARKETING PLAN").toUpperCase()} 2026`);
 

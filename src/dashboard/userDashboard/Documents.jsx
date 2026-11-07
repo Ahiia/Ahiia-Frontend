@@ -5,6 +5,7 @@ import {
   deleteDocument,
   duplicateDocument,
 } from "../../services/document.service";
+import { pushNotification } from "../../services/notification.service";
 import { toast } from "react-toastify";
 import {
   FileText,
@@ -21,9 +22,7 @@ import {
   Copy,
   Trash2,
   Sparkles,
-  CheckCircle2,
   X,
-  Loader2,
   RefreshCw,
   Download,
 } from "lucide-react";
@@ -141,17 +140,17 @@ function Dropdown({ label, value, options, onChange }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
+        className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors whitespace-nowrap cursor-pointer"
       >
         <span>{value === "All" ? label : value}</span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 transition-transform duration-200 ${
             open ? "rotate-180" : ""
           }`}
         />
       </button>
       <div
-        className={`absolute right-0 sm:left-0 z-20 mt-2 w-44 origin-top rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 overflow-hidden transition-all duration-150 ${
+        className={`absolute left-0 z-20 mt-2 w-44 origin-top rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 overflow-hidden transition-all duration-150 ${
           open
             ? "opacity-100 scale-100 pointer-events-auto"
             : "opacity-0 scale-95 pointer-events-none"
@@ -165,7 +164,7 @@ function Dropdown({ label, value, options, onChange }) {
               onChange(opt);
               setOpen(false);
             }}
-            className={`block w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+            className={`block w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors cursor-pointer ${
               value === opt
                 ? "bg-slate-50 text-[#131B4D] font-bold"
                 : "text-slate-600 hover:bg-slate-50"
@@ -451,6 +450,12 @@ const Documents = () => {
       toast.info(`Duplicating "${doc.name}"...`);
       await duplicateDocument(doc.id);
       toast.success("Document duplicated successfully!");
+      pushNotification({
+        title: "Document Duplicated",
+        message: `Created a copy of "${doc.name}".`,
+        type: "document_duplicated",
+        link: "/dashboard/documents",
+      });
       fetchDocuments();
     } catch (err) {
       console.error("Duplicate failed:", err);
@@ -466,6 +471,11 @@ const Documents = () => {
       setDocumentsList((prev) => prev.filter((d) => d.id !== doc.id));
       await deleteDocument(doc.id);
       toast.success("Document deleted successfully.");
+      pushNotification({
+        title: "Document Deleted",
+        message: `"${doc.name}" was removed from your workspace.`,
+        type: "document_deleted",
+      });
       setTotalCount((c) => Math.max(0, c - 1));
     } catch (err) {
       console.error("Delete failed:", err);
@@ -514,26 +524,26 @@ const Documents = () => {
   }, [documentsList, query, typeFilter, statusFilter, sortBy]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
           <p className="text-xs font-bold text-blue-600 mb-1">
             Manage and continue working on your business documents.
           </p>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Your documents
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Everything you've created with Ahiia.Ai, in one place.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <button
             type="button"
             onClick={fetchDocuments}
             disabled={loading}
-            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
+            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer shrink-0"
             title="Refresh document list"
           >
             <RefreshCw
@@ -543,7 +553,7 @@ const Documents = () => {
           <button
             type="button"
             onClick={() => navigate("/dashboard/create-document")}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#131B4D] hover:bg-[#1B2666] active:scale-[0.98] text-white font-bold text-sm shadow-xs transition-all cursor-pointer"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#131B4D] hover:bg-[#1B2666] active:scale-[0.98] text-white font-bold text-sm shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create document</span>
@@ -553,7 +563,7 @@ const Documents = () => {
 
       {/* Banner if redirected from document creation */}
       {bannerInfo && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Sparkles className="w-5 h-5" />
@@ -580,7 +590,7 @@ const Documents = () => {
       )}
 
       {/* Search + filters */}
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -592,7 +602,7 @@ const Documents = () => {
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#131B4D]/15 focus:border-[#131B4D]/40 transition-shadow"
             />
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
             <Dropdown
               label="All types"
               value={typeFilter}
@@ -616,8 +626,8 @@ const Documents = () => {
       </div>
 
       {/* Document list */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-black text-slate-900">
               {filtered.length} Document{filtered.length === 1 ? "" : "s"}
@@ -687,7 +697,7 @@ const Documents = () => {
               return (
                 <li
                   key={doc.id}
-                  className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-5 sm:px-6 py-4 transition-colors ${
+                  className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 transition-colors ${
                     doc.isNewlyCreated
                       ? "bg-emerald-50/40 hover:bg-emerald-50/70"
                       : "hover:bg-slate-50/70"
@@ -700,7 +710,7 @@ const Documents = () => {
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-slate-900 truncate">
                           {doc.name}
@@ -720,39 +730,46 @@ const Documents = () => {
                   </div>
 
                   {/* Status + time + actions */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 sm:shrink-0">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                        STATUS_STYLES[doc.status] || STATUS_STYLES.Draft
-                      }`}
-                    >
-                      {doc.status}
-                    </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-6 sm:shrink-0 pl-13 sm:pl-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                          STATUS_STYLES[doc.status] || STATUS_STYLES.Draft
+                        }`}
+                      >
+                        {doc.status}
+                      </span>
+                      <span className="sm:hidden text-[11px] text-slate-400 truncate">
+                        {doc.updatedDisplay}
+                      </span>
+                    </div>
                     <span className="hidden md:block text-xs text-slate-400 w-32 text-right">
                       {doc.updatedDisplay}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          doc.id
-                            ? `/dashboard/documents/${doc.id}`
-                            : `/dashboard/create-document/${
-                                doc.slug || "business-proposal"
-                              }`,
-                        )
-                      }
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 text-slate-800 text-xs font-bold hover:bg-[#131B4D] hover:text-white hover:border-[#131B4D] active:scale-[0.97] transition-all cursor-pointer"
-                    >
-                      Open
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                    <RowMenu
-                      doc={doc}
-                      onDuplicate={handleDuplicate}
-                      onDelete={handleDelete}
-                      onExport={(d) => setExportingDoc(d)}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            doc.id
+                              ? `/dashboard/documents/${doc.id}`
+                              : `/dashboard/create-document/${
+                                  doc.slug || "business-proposal"
+                                }`,
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 text-slate-800 text-xs font-bold hover:bg-[#131B4D] hover:text-white hover:border-[#131B4D] active:scale-[0.97] transition-all cursor-pointer"
+                      >
+                        Open
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                      <RowMenu
+                        doc={doc}
+                        onDuplicate={handleDuplicate}
+                        onDelete={handleDelete}
+                        onExport={(d) => setExportingDoc(d)}
+                      />
+                    </div>
                   </div>
                 </li>
               );

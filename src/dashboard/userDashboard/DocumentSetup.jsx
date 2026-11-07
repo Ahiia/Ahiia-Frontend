@@ -23,6 +23,7 @@ import {
   startDocumentGeneration,
   waitForDocumentGeneration,
 } from "../../services/document.service";
+import { pushNotification } from "../../services/notification.service";
 import SetupFooter from "../components/document-setup/SetupFooter";
 import OptionalInformation from "../components/document-setup/OptionalInformation";
 import GenerateModal from "../components/document-setup/GenerateModal";
@@ -166,24 +167,24 @@ const DocumentSetup = () => {
                 setIsPolling(false);
                 setIsGenerating(false);
               }
-              toast.success(`"${pending.payload?.title || "Document"}" created successfully!`);
+              const docTitleCreated = pending.payload?.title || template?.title || "Document";
+              toast.success(`"${docTitleCreated}" created successfully!`);
+              pushNotification({
+                title: "Document Created",
+                message: `"${docTitleCreated}" is ready to edit and export.`,
+                type: "document_created",
+                link: `/dashboard/documents/${createdId}`,
+                dedupeKey: `doc-created-${createdId}`,
+              });
               try {
-                if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-                  const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+                if (createdId && pending?.payload?.structuredInputs) {
+                  const sInputs = pending.payload.structuredInputs;
                   localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
                   const client = sInputs.clientName || sInputs.preparedFor;
                   if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
                 }
               } catch {}
-              try {
-        if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
-          localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
-          const client = sInputs.clientName || sInputs.preparedFor;
-          if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
-        }
-      } catch {}
-      navigate(`/dashboard/documents/${createdId}`, {
+              navigate(`/dashboard/documents/${createdId}`, {
                 state: {
                   document: syncResult,
                   newlyCreated: true,
@@ -224,25 +225,25 @@ const DocumentSetup = () => {
           setIsPolling(false);
           setIsGenerating(false);
         }
-        toast.success(`"${pending.payload?.title || "Document"}" generated successfully!`);
+        const docTitleGenerated = pending.payload?.title || template?.title || "Document";
+        toast.success(`"${docTitleGenerated}" generated successfully!`);
+        pushNotification({
+          title: "Document Generated",
+          message: `"${docTitleGenerated}" is ready in your workspace.`,
+          type: "document_created",
+          link: `/dashboard/documents/${docId}`,
+          dedupeKey: `doc-created-${docId}`,
+        });
 
         try {
-        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
-          localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
-          const client = sInputs.clientName || sInputs.preparedFor;
-          if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
-        }
-      } catch {}
-      try {
-        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
-          localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
-          const client = sInputs.clientName || sInputs.preparedFor;
-          if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
-        }
-      } catch {}
-      navigate(`/dashboard/documents/${docId}`, {
+          if (docId && pending?.payload?.structuredInputs) {
+            const sInputs = pending.payload.structuredInputs;
+            localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
+            const client = sInputs.clientName || sInputs.preparedFor;
+            if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
+          }
+        } catch {}
+        navigate(`/dashboard/documents/${docId}`, {
           state: {
             document,
             newlyCreated: true,
@@ -534,16 +535,23 @@ const DocumentSetup = () => {
           toast.success(
             `"${payload.title}" created successfully! Generating document...`
           );
+          pushNotification({
+            title: `${template.title} Created`,
+            message: `"${payload.title}" is ready to edit and export.`,
+            type: "document_created",
+            link: `/dashboard/documents/${createdId}`,
+            dedupeKey: `doc-created-${createdId}`,
+          });
 
           try {
-        if (createdId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
-          localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
-          const client = sInputs.clientName || sInputs.preparedFor;
-          if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
-        }
-      } catch {}
-      navigate(`/dashboard/documents/${createdId}`, {
+            if (createdId && payload?.structuredInputs) {
+              const sInputs = payload.structuredInputs;
+              localStorage.setItem("ahiia_doc_inputs_" + createdId, JSON.stringify(sInputs));
+              const client = sInputs.clientName || sInputs.preparedFor;
+              if (client) localStorage.setItem("ahiia_doc_client_" + createdId, client);
+            }
+          } catch {}
+          navigate(`/dashboard/documents/${createdId}`, {
             state: {
               document: result,
               newlyCreated: true,
@@ -593,10 +601,17 @@ const DocumentSetup = () => {
         setIsGenerating(false);
       }
       toast.success(`"${payload.title}" generated successfully!`);
+      pushNotification({
+        title: `${template.title} Ready`,
+        message: `"${payload.title}" has finished generating and is ready to export.`,
+        type: "document_created",
+        link: `/dashboard/documents/${docId}`,
+        dedupeKey: `doc-created-${docId}`,
+      });
 
       try {
-        if (docId && (payload?.structuredInputs || pending?.payload?.structuredInputs)) {
-          const sInputs = payload?.structuredInputs || pending?.payload?.structuredInputs;
+        if (docId && payload?.structuredInputs) {
+          const sInputs = payload.structuredInputs;
           localStorage.setItem("ahiia_doc_inputs_" + docId, JSON.stringify(sInputs));
           const client = sInputs.clientName || sInputs.preparedFor;
           if (client) localStorage.setItem("ahiia_doc_client_" + docId, client);
@@ -659,6 +674,12 @@ const DocumentSetup = () => {
         structuredInputs: payload.structuredInputs,
       });
       toast.success("Draft saved successfully!");
+      pushNotification({
+        title: "Draft Saved",
+        message: `"${payload.title}" was saved to your workspace drafts.`,
+        type: "document_saved",
+        link: "/dashboard/documents",
+      });
     } catch (err) {
       console.error("API draft save failed:", err);
       const errMsg = extractApiErrorMessage(
@@ -998,4 +1019,3 @@ const DocumentSetup = () => {
 };
 
 export default DocumentSetup;
-

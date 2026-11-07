@@ -1,17 +1,35 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Bell,
   ChevronDown,
-  Menu,
   LogOut,
-  User,
+  Building2,
+  Sparkles,
+  BarChart3,
+  CreditCard,
   Settings,
+  Headphones,
   CheckCircle2,
+  FileText,
+  Download,
+  Copy,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useCookies } from "react-cookie";
 import { getUserProfile } from "../../services/profile.service";
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  removeNotification,
+  clearAllNotifications,
+  formatNotificationTime,
+  NOTIFICATION_EVENT,
+} from "../../services/notification.service";
+import logo from "../../assets/ahiia_icon.svg";
 
 const PAGE_TITLES = {
   "/dashboard": "Dashboard",
@@ -22,6 +40,7 @@ const PAGE_TITLES = {
   "/dashboard/analytics": "Analytics",
   "/dashboard/company-profile": "Company Profile",
   "/dashboard/brand-kit": "Brand Kit",
+  "/dashboard/billing": "Plans & Billing",
   "/dashboard/settings": "Settings",
   "/dashboard/help": "Help & Support",
   // Admin route titles
@@ -34,11 +53,42 @@ const PAGE_TITLES = {
   "/admin/settings": "Admin Settings",
 };
 
-const DashboardHeader = ({
-  titleOverride,
-  onMenuToggle = () => {},
-  profile = {},
-}) => {
+const NOTIFICATION_ICON_CONFIG = {
+  document_created: {
+    icon: CheckCircle2,
+    tint: "bg-emerald-50 text-emerald-600",
+  },
+  document_exported: {
+    icon: Download,
+    tint: "bg-indigo-50 text-indigo-600",
+  },
+  document_saved: {
+    icon: FileText,
+    tint: "bg-blue-50 text-blue-600",
+  },
+  ai_edit: {
+    icon: Sparkles,
+    tint: "bg-violet-50 text-violet-600",
+  },
+  brand_kit: {
+    icon: Sparkles,
+    tint: "bg-blue-50 text-blue-600",
+  },
+  profile_updated: {
+    icon: Building2,
+    tint: "bg-emerald-50 text-emerald-600",
+  },
+  document_duplicated: {
+    icon: Copy,
+    tint: "bg-sky-50 text-sky-600",
+  },
+  document_deleted: {
+    icon: Trash2,
+    tint: "bg-rose-50 text-rose-600",
+  },
+};
+
+const DashboardHeader = ({ titleOverride, profile = {} }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [, , removeCookie] = useCookies(["accessToken", "refreshToken"]);
@@ -47,6 +97,8 @@ const DashboardHeader = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const [notifications, setNotifications] = useState(() => getNotifications());
+  const [, setTimeTick] = useState(0);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
@@ -57,6 +109,41 @@ const DashboardHeader = ({
     PAGE_TITLES[location.pathname] ||
     PAGE_TITLES[location.pathname.replace(/\/$/, "")] ||
     "Dashboard";
+
+  // Sync live dashboard notifications & refresh relative timestamps
+  useEffect(() => {
+    setNotifications(getNotifications());
+
+    const handleNotificationsChanged = (event) => {
+      if (Array.isArray(event?.detail)) {
+        setNotifications(event.detail);
+      } else {
+        setNotifications(getNotifications());
+      }
+    };
+
+    const handleStorage = (event) => {
+      if (event.key === "ahiia_dashboard_notifications") {
+        setNotifications(getNotifications());
+      }
+    };
+
+    window.addEventListener(NOTIFICATION_EVENT, handleNotificationsChanged);
+    window.addEventListener("storage", handleStorage);
+
+    const interval = setInterval(() => {
+      setTimeTick((t) => t + 1);
+    }, 30000);
+
+    return () => {
+      window.removeEventListener(
+        NOTIFICATION_EVENT,
+        handleNotificationsChanged
+      );
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Fetch or listen for updated profile data
   useEffect(() => {
@@ -112,6 +199,8 @@ const DashboardHeader = ({
         .slice(0, 2)
     : "YC";
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -132,20 +221,27 @@ const DashboardHeader = ({
     navigate("/login");
   };
 
-  return (
-    <header className="sticky top-0 z-30 h-20 bg-[#F4F6FA]/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 border-b border-slate-200/50">
-      {/* Left section: Hamburger button (mobile) + Dynamic Title */}
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={onMenuToggle}
-          className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
-          aria-label="Open navigation sidebar"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+  const handleNotificationClick = (item) => {
+    markNotificationRead(item.id);
+    if (item.link) {
+      setShowNotifications(false);
+      navigate(item.link);
+    }
+  };
 
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 truncate">
+  return (
+    <header className="sticky top-0 z-30 h-16 sm:h-20 bg-[#F4F6FA]/90 backdrop-blur-md px-3.5 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-4 border-b border-slate-200/50">
+      {/* Left section: Mobile Brand Badge (no sidebar click) + Dynamic Title */}
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <Link
+          to="/dashboard"
+          className="lg:hidden w-9 h-9 rounded-xl bg-[#0F1738] flex items-center justify-center p-1.5 shadow-xs shrink-0 transition-transform active:scale-95"
+          aria-label="AHIIA.Ai Home"
+        >
+          <img src={logo} alt="AHIIA.Ai" className="w-5 h-5 object-contain" />
+        </Link>
+
+        <h1 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 truncate">
           {currentTitle}
         </h1>
       </div>
@@ -165,7 +261,7 @@ const DashboardHeader = ({
       </div>
 
       {/* Right section: Notifications + Profile badge */}
-      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
@@ -174,52 +270,124 @@ const DashboardHeader = ({
               setShowNotifications(!showNotifications);
               setShowProfileMenu(false);
             }}
-            className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-xs transition-colors relative"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-xs transition-all active:scale-95 relative cursor-pointer"
             aria-label="View notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center ring-2 ring-white shadow-2xs">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {/* Notification dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 px-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-sm font-bold text-slate-900">Notifications</span>
-                <span className="text-xs text-indigo-600 font-semibold cursor-pointer hover:underline">
-                  Mark all read
-                </span>
-              </div>
-              <div className="py-2 space-y-1 max-h-64 overflow-y-auto">
-                <div className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-3 cursor-pointer">
-                  <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">
-                      Proposal Finalized
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Solar Installation Proposal is ready to export.
-                    </p>
-                    <span className="text-[10px] text-slate-400">2h ago</span>
-                  </div>
+            <div className="fixed inset-x-3 top-[4.25rem] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-88 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 px-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-900">
+                    Notifications
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                      {unreadCount} new
+                    </span>
+                  )}
                 </div>
-                <div className="p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-3 cursor-pointer">
-                  <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 shrink-0">
-                    <Bell className="w-4 h-4" />
+
+                {notifications.length > 0 && (
+                  <div className="flex items-center gap-2.5">
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => markAllNotificationsRead()}
+                        className="text-xs text-indigo-600 font-semibold cursor-pointer hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => clearAllNotifications()}
+                      className="text-xs text-slate-400 hover:text-rose-600 font-semibold cursor-pointer transition-colors"
+                    >
+                      Clear all
+                    </button>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">
-                      Brand Kit Configured
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Brand assets applied to new templates.
-                    </p>
-                    <span className="text-[10px] text-slate-400">5h ago</span>
-                  </div>
-                </div>
+                )}
               </div>
+
+              {notifications.length === 0 ? (
+                <div className="py-8 px-4 text-center">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-2.5">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700">
+                    No activity notifications yet
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                    When you create, edit, or export a document, or update your Brand Kit, it will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="py-1.5 space-y-1 max-h-72 overflow-y-auto">
+                  {notifications.map((item) => {
+                    const cfg =
+                      NOTIFICATION_ICON_CONFIG[item.type] ||
+                      NOTIFICATION_ICON_CONFIG.document_created;
+                    const IconComponent = cfg.icon;
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => handleNotificationClick(item)}
+                        className={`group p-2.5 rounded-xl transition-colors flex items-start justify-between gap-2.5 cursor-pointer ${
+                          item.read
+                            ? "hover:bg-slate-50 opacity-80"
+                            : "bg-blue-50/35 hover:bg-blue-50/60"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <div
+                            className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${cfg.tint}`}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-bold text-slate-800 truncate">
+                                {item.title}
+                              </p>
+                              {!item.read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 mt-0.5">
+                              {item.message}
+                            </p>
+                            <span className="text-[10px] text-slate-400 mt-1 block">
+                              {formatNotificationTime(item.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNotification(item.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
+                          aria-label="Dismiss notification"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -232,10 +400,10 @@ const DashboardHeader = ({
               setShowProfileMenu(!showProfileMenu);
               setShowNotifications(false);
             }}
-            className="flex items-center gap-2.5 py-1.5 pl-2 pr-3.5 bg-[#0F1738] hover:bg-[#16214C] text-white rounded-full shadow-xs transition-colors group cursor-pointer"
+            className="flex items-center gap-2 py-1.5 pl-1.5 pr-2.5 sm:pl-2 sm:pr-3.5 bg-[#0F1738] hover:bg-[#16214C] text-white rounded-full shadow-xs transition-colors group cursor-pointer"
             aria-label="User menu"
           >
-            <div className="w-7 h-7 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-[11px] tracking-wider shrink-0 overflow-hidden">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/15 text-white flex items-center justify-center font-bold text-[10px] sm:text-[11px] tracking-wider shrink-0 overflow-hidden">
               {logoUrl ? (
                 <img
                   src={logoUrl}
@@ -254,7 +422,7 @@ const DashboardHeader = ({
 
           {/* Profile menu popup */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-bold text-slate-900 truncate">
@@ -281,8 +449,49 @@ const DashboardHeader = ({
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
               >
-                <User className="w-4 h-4 text-slate-400" />
+                <Building2 className="w-4 h-4 text-slate-400" />
                 Company Profile
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  navigate("/dashboard/brand-kit");
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
+              >
+                <Sparkles className="w-4 h-4 text-slate-400" />
+                Brand Kit
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  navigate("/dashboard/analytics");
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
+              >
+                <BarChart3 className="w-4 h-4 text-slate-400" />
+                Analytics
+              </button>
+
+              <div className="my-1 border-t border-slate-100" />
+              <div className="px-3 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Account & Support
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  navigate("/dashboard/billing");
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
+              >
+                <CreditCard className="w-4 h-4 text-slate-400" />
+                Plans & Billing
               </button>
 
               <button
@@ -294,7 +503,19 @@ const DashboardHeader = ({
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
               >
                 <Settings className="w-4 h-4 text-slate-400" />
-                Account Settings
+                Settings
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  navigate("/dashboard/help");
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left"
+              >
+                <Headphones className="w-4 h-4 text-slate-400" />
+                Help & Support
               </button>
 
               <div className="my-1 border-t border-slate-100" />

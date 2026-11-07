@@ -104,54 +104,63 @@ const Header = () => {
             </a>
           </div>
 
-          {/* Mobile toggle */}
-          <button
-            type="button"
-            className="md:hidden text-white p-2 -mr-2"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile quick CTA + toggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <a
+              href="/signup"
+              className="px-3.5 py-1.5 text-xs font-semibold text-white rounded-full bg-indigo-500/90 hover:bg-indigo-400 shadow-[0_0_16px_rgba(99,102,241,0.4)] transition-all active:scale-95"
+            >
+              Get Started
+            </a>
+            <button
+              type="button"
+              className="text-white p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile menu panel */}
       <div
-        className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${
-          mobileOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          mobileOpen ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="px-4 sm:px-6 pb-6 pt-2 flex flex-col gap-1 bg-[#0B0B24]/95 backdrop-blur-md border-b border-white/10">
+        <div className="px-4 sm:px-6 pb-6 pt-3 flex flex-col gap-1.5 bg-[#0B0B24]/95 backdrop-blur-xl border-b border-white/10 shadow-2xl">
           {NAV_LINKS.map((link) => (
             <a
               key={link.label}
               href={link.href || `/#${link.id}`}
-              onClick={link.href ? undefined : handleNavClick(link.id)}
-              className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+              onClick={link.href ? () => setMobileOpen(false) : handleNavClick(link.id)}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeId === link.id
-                  ? "bg-white/10 text-white"
+                  ? "bg-indigo-500/20 text-white border border-indigo-400/30 shadow-xs"
                   : "text-slate-300 hover:text-white hover:bg-white/5"
               }`}
             >
-              {link.label}
+              <span>{link.label}</span>
+              <span className="text-xs text-indigo-400/70">→</span>
             </a>
           ))}
-          <div className="flex flex-col gap-2 mt-3">
-            <a
-              href="/signup"
-              onClick={() => setMobileOpen(false)}
-              className="px-4 py-2.5 text-center text-sm font-medium text-white rounded-full border border-white/15"
-            >
-              Get Started
-            </a>
+          <div className="grid grid-cols-2 gap-2.5 mt-4 pt-3 border-t border-white/10">
             <a
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="px-4 py-2.5 text-center text-sm font-semibold text-white rounded-full bg-indigo-500"
+              className="px-4 py-3 text-center text-sm font-semibold text-white rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 active:scale-[0.98] transition-all"
             >
               Log In
+            </a>
+            <a
+              href="/signup"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-3 text-center text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] active:scale-[0.98] transition-all"
+            >
+              Sign Up Free
             </a>
           </div>
         </div>

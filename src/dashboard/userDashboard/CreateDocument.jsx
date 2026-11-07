@@ -132,33 +132,33 @@ const CreateDocument = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-24 sm:pb-0">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto pb-20 lg:pb-0">
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <p className="text-xs font-bold text-blue-600 mb-1">
           Pick a generator to start a new business document.
         </p>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           What are you building today?
         </h2>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
           Choose a document type and we'll help you turn your business context
           into a professional document
         </p>
       </div>
 
       {/* Context bar */}
-      <div className="bg-white px-5 sm:px-6 py-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white px-4 sm:px-6 py-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-xs sm:text-sm text-slate-500">
           Ahiia will use your Company Profile and Brand Kit to help personalize
           this document.
         </p>
-        <div className="flex items-center gap-4 shrink-0">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/60">
             <Building2 className="w-3.5 h-3.5 text-blue-500" />
             {companyName || "Your Company"}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/60">
             <Palette className="w-3.5 h-3.5 text-blue-500" />
             Brand Kit applied
           </span>
@@ -191,7 +191,7 @@ const CreateDocument = () => {
                     canCreateDocument(billing, blueprint.slug) ? navigate(`/dashboard/create-document/${blueprint.slug}`) : !billingLoading && !billingError && navigate("/dashboard/billing")
                   }
                   aria-pressed={isSelected}
-                  className={`relative text-left bg-white rounded-3xl p-5 sm:p-6 border shadow-xs transition-all duration-150 cursor-pointer group ${
+                  className={`relative text-left bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border shadow-xs transition-all duration-150 cursor-pointer group ${
                     isSelected
                       ? "border-[#131B4D] ring-2 ring-[#131B4D]/15 shadow-md"
                       : "border-slate-200/80 hover:border-slate-300 hover:shadow-md"
@@ -245,8 +245,8 @@ const CreateDocument = () => {
             })}
       </div>
 
-      {/* Footer / continue bar */}
-      <div className="fixed sm:sticky bottom-0 left-0 sm:left-auto right-0 sm:right-auto sm:bottom-2 z-10 bg-white sm:rounded-3xl border-t sm:border border-slate-200/80 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] sm:shadow-xs px-5 sm:px-6 py-4 flex items-center justify-between gap-4">
+      {/* Footer / continue bar (sits cleanly above mobile bottom nav on < lg) */}
+      <div className="fixed lg:sticky bottom-[60px] lg:bottom-2 left-0 lg:left-auto right-0 lg:right-auto z-20 bg-white/95 backdrop-blur-md lg:rounded-3xl border-t lg:border border-slate-200/80 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] lg:shadow-xs px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-bold text-slate-400">Selected</p>
           <p

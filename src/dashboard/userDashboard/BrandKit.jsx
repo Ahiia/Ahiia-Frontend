@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import {
   CheckCircle2,
-  UploadCloud,
   ChevronDown,
   Plus,
   Trash2,
@@ -12,6 +11,7 @@ import { toast } from "react-toastify";
 import { getBrandKit, updateBrandKit } from "../../services/brandKit.service";
 import { getUserProfile } from "../../services/profile.service";
 import { uploadCompanyLogo } from "../../services/logo.service.js";
+import { pushNotification } from "../../services/notification.service";
 
 const FONTS = ["Montserrat", "Inter", "Poppins", "Lora", "Source Sans Pro"];
 const PLATFORMS = [
@@ -115,7 +115,7 @@ const BrandKit = () => {
 
           if (profileRes.status === "fulfilled" && profileRes.value) {
             const pData = profileRes.value.data || profileRes.value;
-            setLogoUrl(pData.logoUrl || "");
+            if (pData.logoUrl) setLogoUrl(pData.logoUrl);
             if (pData?.companyName) {
               setCompanyName(pData.companyName);
             }
@@ -142,7 +142,9 @@ const BrandKit = () => {
       try {
         const url = await uploadCompanyLogo(file);
         setLogoUrl(url);
-      try { localStorage.setItem("ahiia_active_logo", url); } catch {}
+        try {
+          localStorage.setItem("ahiia_active_logo", url);
+        } catch {}
         markDirty();
         // Automatically persist logo to Brand Kit on the server
         try {
@@ -161,6 +163,14 @@ const BrandKit = () => {
         } catch {
           toast.success("Logo uploaded!");
         }
+
+        pushNotification({
+          title: "Brand Logo Updated",
+          message: `Uploaded "${file.name}" and applied it to your Brand Kit.`,
+          type: "brand_kit",
+          link: "/dashboard/brand-kit",
+          dedupeKey: "brand-kit-logo",
+        });
 
         window.dispatchEvent(
           new CustomEvent("ahiia:profile-updated", {
@@ -232,6 +242,13 @@ const BrandKit = () => {
 
       setDirty(false);
       toast.success("Brand Kit saved successfully!");
+      pushNotification({
+        title: "Brand Kit Configured",
+        message: `Brand colors (${primaryColor}), ${font} font, and assets applied to your templates.`,
+        type: "brand_kit",
+        link: "/dashboard/brand-kit",
+        dedupeKey: "brand-kit-save",
+      });
     } catch (err) {
       console.error("Failed to save brand kit:", err);
       toast.error(err.response?.data?.message || "Failed to save Brand Kit");
@@ -246,17 +263,17 @@ const BrandKit = () => {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold text-blue-600 mb-1">
             The identity Ahiia applies to your documents.
           </p>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Brand Kit
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Keep your brand consistent across the documents you create with
             Ahiia.
           </p>
@@ -265,7 +282,7 @@ const BrandKit = () => {
           type="button"
           onClick={handleSave}
           disabled={saving || !dirty}
-          className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all shrink-0 ${
+          className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all shrink-0 ${
             dirty && !saving
               ? "bg-[#131B4D] hover:bg-[#1B2666] active:scale-[0.98] text-white cursor-pointer"
               : "bg-slate-100 text-slate-400 cursor-not-allowed"
@@ -284,7 +301,7 @@ const BrandKit = () => {
 
       {/* Unsaved changes bar */}
       <div
-        className={`bg-white px-5 sm:px-6 rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden transition-all duration-300 ${
+        className={`bg-white px-4 sm:px-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden transition-all duration-300 ${
           dirty
             ? "py-4 opacity-100"
             : "py-0 max-h-0 opacity-0 border-transparent"
@@ -297,9 +314,9 @@ const BrandKit = () => {
       </div>
 
       {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
         {/* Brand identity */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-6">
           <div>
             <h3 className="text-sm font-black text-slate-900">
               Brand identity
@@ -315,9 +332,17 @@ const BrandKit = () => {
               Logo
             </label>
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60">
-              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </span>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={companyName || "Logo"}
+                  className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200 p-0.5 shrink-0"
+                />
+              ) : (
+                <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4" />
+                </span>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-slate-800 truncate">
                   {logoName}
@@ -369,7 +394,7 @@ const BrandKit = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-slate-200">
                 <label className="relative w-8 h-8 rounded-lg shrink-0 cursor-pointer overflow-hidden ring-1 ring-inset ring-black/5">
                   <input
                     type="color"
@@ -391,7 +416,7 @@ const BrandKit = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-slate-200">
                 <label className="relative w-8 h-8 rounded-lg shrink-0 cursor-pointer overflow-hidden ring-1 ring-inset ring-black/5">
                   <input
                     type="color"
@@ -522,18 +547,26 @@ const BrandKit = () => {
           <p className="text-xs font-bold text-slate-400 mb-2 px-1">
             Document preview
           </p>
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
             {/* Preview header */}
             <div
-              className="px-6 py-5 flex items-center gap-3 transition-colors duration-300"
+              className="px-5 sm:px-6 py-5 flex items-center gap-3 transition-colors duration-300"
               style={{ backgroundColor: secondaryColor }}
             >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0 transition-colors duration-300"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {previewInitials}
-              </div>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={companyName || "Company logo"}
+                  className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 shrink-0 shadow-xs"
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0 transition-colors duration-300"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {previewInitials}
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white truncate">
                   {companyName || "Your Company"}
@@ -545,7 +578,7 @@ const BrandKit = () => {
             </div>
 
             {/* Preview body */}
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               <p
                 className="text-xs font-bold uppercase tracking-wide transition-colors duration-300"
                 style={{ color: primaryColor }}

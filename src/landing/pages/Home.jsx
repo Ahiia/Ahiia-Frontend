@@ -38,42 +38,44 @@ const Reveal = ({ show, delay = 0, className = "", children }) => (
 );
 
 const HeroMock = ({ show }) => (
-  <Reveal show={show} delay={350} className="max-w-4xl">
-    <div className="relative rounded-2xl md:rounded-3xl border border-gray-300 bg-white backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden">
+  <Reveal show={show} delay={350} className="w-full max-w-4xl">
+    <div className="relative rounded-2xl md:rounded-3xl border border-indigo-200/40 bg-white backdrop-blur-xl shadow-[0_25px_70px_-15px_rgba(79,70,229,0.45)] overflow-hidden">
       {/* card header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-300">
-        <div className="flex items-center gap-2 text-black/90 text-sm font-medium">
-          <Sparkles size={16} className="text-indigo-300" />
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center gap-2 text-slate-900 text-xs sm:text-sm font-bold">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <Sparkles size={14} />
+          </span>
           Company memory
         </div>
-        <span className="flex items-center gap-1.5 text-xs font-medium bg-emerald-200/20 rounded-md px-2 py-1 text-emerald-300">
-          {/* <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> */}
+        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-1 text-emerald-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           Synced
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr_0.95fr] divide-y lg:divide-y-0 lg:divide-x divide-gray-300">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr_0.95fr] divide-y lg:divide-y-0 lg:divide-x divide-slate-100 text-left">
         {/* Column 1: document details */}
         <div className="p-4 sm:p-6 space-y-4">
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-gray-500 mb-1.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
               Document type
             </p>
-            <div className="flex items-center justify-between rounded-lg border border-indigo-400/40 bg-indigo-500/10 px-3 py-2.5">
-              <span className="text-sm font-medium text-indigo-500">
+            <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/70 px-3.5 py-2.5">
+              <span className="text-xs sm:text-sm font-bold text-indigo-700">
                 Business Proposal
               </span>
-              <Sparkles size={14} className="text-indigo-300" />
+              <Sparkles size={14} className="text-indigo-500" />
             </div>
           </div>
-          <dl className="space-y-2.5">
+          <dl className="grid grid-cols-2 sm:grid-cols-1 gap-2.5 sm:gap-0 sm:space-y-2.5">
             {FIELDS.map((f) => (
               <div
                 key={f.label}
-                className="flex items-start justify-between gap-3 text-xs"
+                className="flex flex-col sm:flex-row sm:items-start justify-between gap-0.5 sm:gap-3 text-xs bg-slate-50/70 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border border-slate-100 sm:border-0"
               >
-                <dt className="text-gray-500 shrink-0">{f.label}</dt>
-                <dd className="text-black/90 font-medium text-right">
+                <dt className="text-slate-400 font-medium shrink-0">{f.label}</dt>
+                <dd className="text-slate-900 font-bold sm:text-right truncate">
                   {f.value}
                 </dd>
               </div>
@@ -82,67 +84,67 @@ const HeroMock = ({ show }) => (
         </div>
 
         {/* Column 2: generation progress */}
-        <div className="p-4 sm:p-6 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <Loader2 size={15} className="text-indigo-300 animate-spin" />
-            <p className="text-sm font-medium text-black/90">
+        <div className="p-4 sm:p-6 flex flex-col bg-slate-50/30 lg:bg-transparent">
+          <div className="flex items-center gap-2 mb-3.5">
+            <Loader2 size={15} className="text-indigo-600 animate-spin" />
+            <p className="text-xs sm:text-sm font-bold text-slate-900">
               Generating your proposal&hellip;
             </p>
           </div>
-          <ul className="space-y-3 flex-1">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-3 flex-1">
             {GEN_STEPS.map((step) => (
               <li
                 key={step}
-                className="flex items-center gap-2.5 text-sm text-gray-500"
+                className="flex items-center gap-2.5 text-xs sm:text-sm font-medium text-slate-600"
               >
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
                   <Check size={11} strokeWidth={3} />
                 </span>
                 {step}
               </li>
             ))}
           </ul>
-          <div className="mt-5">
-            <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
-              <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-indigo-400 to-indigo-300" />
+          <div className="mt-4 sm:mt-5">
+            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-indigo-600 to-blue-500" />
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-[11px] font-medium text-slate-400">
               Draft ready in about 40 seconds
             </p>
           </div>
         </div>
 
         {/* Column 3: brand kit + result */}
-        <div className="p-4 sm:p-6 space-y-4">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-black/90 mb-2.5">
-              <Sparkles size={13} className="text-indigo-300" />
+        <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 mb-2.5">
+              <Sparkles size={13} className="text-indigo-600" />
               Brand Kit Applied
             </div>
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-slate-900 border border-slate-200 p-1 shadow-xs shrink-0">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 border border-slate-200 p-1 shadow-xs shrink-0">
                 <img src={logo} alt="Ahiia Logo" className="h-4 w-4 object-contain" />
               </span>
-              <span className="h-7 w-7 rounded-sm bg-indigo-800 border border-white/10" />
-              <span className="h-7 w-7 rounded-sm bg-indigo-500 border border-white/10" />
-              <span className="h-7 w-7 rounded-sm bg-indigo-300 border border-white/10" />
-              <span className="ml-1 text-[11px] text-gray-500 leading-tight">
+              <span className="h-7 w-7 rounded-md bg-indigo-800 border border-white/10 shrink-0" />
+              <span className="h-7 w-7 rounded-md bg-indigo-500 border border-white/10 shrink-0" />
+              <span className="h-7 w-7 rounded-md bg-indigo-300 border border-white/10 shrink-0" />
+              <span className="ml-1 text-[11px] font-medium text-slate-500 leading-tight">
                 Montserrat &middot; Ahiia Logo
               </span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/[0.06] p-3.5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300 mb-1.5">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20">
-                <Check size={11} strokeWidth={3} />
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 mb-1">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <Check size={10} strokeWidth={3} />
               </span>
               Proposal Generated
             </div>
-            <p className="text-xs text-gray-500 font-medium mb-1.5">
+            <p className="text-xs text-emerald-800 font-bold mb-1">
               14 pages &middot; 8 sections
             </p>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Your proposal has been generated using your company profile, brand
               guidelines, pricing, and sales rules. Review the content, make
               improvements, or export it when you&rsquo;re ready.
@@ -218,33 +220,35 @@ const Home = () => {
       <div className="relative min-h-screen overflow-hidden">
         {/* ambient background glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[820px] rounded-full bg-indigo-600/20 blur-[120px]" />
-          <div className="absolute top-1/3 -right-40 h-[380px] w-[380px] rounded-full bg-blue-600/10 blur-[100px]" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[820px] rounded-full bg-indigo-600/25 blur-[120px]" />
+          <div className="absolute top-1/3 -right-40 h-[380px] w-[380px] rounded-full bg-blue-600/15 blur-[100px]" />
         </div>
 
         <section
           id="product"
-          className="scroll-mt-20 md:scroll-mt-24 relative px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24"
+          className="scroll-mt-20 md:scroll-mt-24 relative px-4 sm:px-6 lg:px-8 pt-10 sm:pt-20 lg:pt-24 pb-16 sm:pb-24"
         >
           <div className="relative mx-auto max-w-5xl text-center">
             <HeroDecoration />
 
             <Reveal show={mounted} delay={0} className="flex justify-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs sm:text-sm text-slate-300">
-                The AI Operating System for Modern Businesses.
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/25 bg-indigo-500/10 backdrop-blur-md px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-indigo-200 shadow-[0_0_24px_rgba(99,102,241,0.2)]">
+                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse shrink-0" />
+                The AI Operating System for Modern Businesses
               </span>
             </Reveal>
 
             <Reveal show={mounted} delay={100}>
-              <h1 className="mt-6 text-[2.1rem] leading-[1.2] sm:text-5xl md:text-6xl font-bold tracking-tight text-white text-balance">
+              <h1 className="mt-5 sm:mt-6 text-[2rem] leading-[1.16] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white text-balance">
                 Smarter Business Document Creation With{" "}
-                <span className="text-indigo-400">Ahiia.ai</span>
-
+                <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-indigo-300 bg-clip-text text-transparent">
+                  Ahiia.ai
+                </span>
               </h1>
             </Reveal>
 
             <Reveal show={mounted} delay={180}>
-              <p className="mt-5 sm:mt-6 text-base sm:text-lg text-slate-300 mx-auto text-balance">
+              <p className="mt-4 sm:mt-6 text-sm sm:text-lg leading-relaxed text-slate-300/90 max-w-2xl mx-auto text-balance">
                 Ahiia.ai helps businesses, consultants, and agencies streamline
                 the creation of proposals, business plans, contracts, SOPs, and
                 other business documents faster, smarter, and with confidence.
@@ -252,12 +256,12 @@ const Home = () => {
             </Reveal>
 
             <Reveal show={mounted} delay={260}>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
                 <Link
                   to="/signup"
-                  className="group inline-flex items-center gap-2 rounded-full bg-indigo-500 hover:bg-indigo-400 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_0_6px_rgba(99,102,241,0.15)] w-full sm:w-auto justify-center"
+                  className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 px-7 py-3.5 text-sm font-bold text-white transition-all duration-200 shadow-[0_10px_25px_-5px_rgba(99,102,241,0.5)] hover:shadow-[0_0_0_6px_rgba(99,102,241,0.2)] w-full sm:w-auto justify-center active:scale-[0.98]"
                 >
-                  Get Started
+                  Get Started Free
                   <ArrowRight
                     size={16}
                     className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -269,16 +273,16 @@ const Home = () => {
                     e.preventDefault();
                     scrollToSection("how-it-works");
                   }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors duration-200 w-full sm:w-auto justify-center"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-xs px-7 py-3.5 text-sm font-semibold text-slate-200 hover:bg-white/10 transition-all duration-200 w-full sm:w-auto justify-center active:scale-[0.98]"
                 >
-                  <Play size={14} />
+                  <Play size={14} className="text-indigo-400 fill-indigo-400" />
                   See How It Works
                 </a>
               </div>
             </Reveal>
           </div>
 
-          <div className="relative mx-auto mt-12 sm:mt-16 w-full flex justify-center">
+          <div className="relative mx-auto mt-10 sm:mt-16 w-full flex justify-center">
             <HeroMock show={mounted} />
           </div>
         </section>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Check, Download, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { updateDocumentStatus } from "../../services/document.service";
+import { pushNotification } from "../../services/notification.service";
 
 /**
  * Standard formats mapped by document type.
@@ -342,17 +343,20 @@ const ExportModal = ({
           sections,
         });
         toast.success(`Exported ${documentTitle} as ${selectedFormat}`);
+        pushNotification({
+          title: "Document Exported",
+          message: `"${documentTitle}" was exported as ${selectedFormat} (${selectedStyle} style).`,
+          type: "document_exported",
+          link:
+            documentId && documentId !== "new"
+              ? `/dashboard/documents/${documentId}`
+              : "/dashboard/documents",
+        });
         onClose();
         return;
       }
 
       // 2. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
-      // Generates the live document with ALL user edits, latest tagline, and active logo.
-      // This guarantees edits are never lost to stale backend drafts.
-
-      // 3. High-fidelity Client Document Generator (PDF, PPTX, DOCX)
-      // Generates the real document content, structure, styling, and branding.
-      // NEVER touches window.print() or captures any UI elements!
       {
         const resolvedActiveLogo =
           brandKit?.logoUrl ||
@@ -417,6 +421,16 @@ const ExportModal = ({
           console.warn("Could not sync exported status with server:", err);
         }
       }
+
+      pushNotification({
+        title: "Document Exported",
+        message: `"${documentTitle}" was exported as ${selectedFormat} (${selectedStyle} style).`,
+        type: "document_exported",
+        link:
+          documentId && documentId !== "new"
+            ? `/dashboard/documents/${documentId}`
+            : "/dashboard/documents",
+      });
 
       toast.success(`Downloaded ${documentTitle} (${selectedFormat})`);
       onClose();

@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FiArrowUp,
   FiCheck,
   FiFileText,
   FiDownload,
   FiLoader,
-  FiBox,
 } from "react-icons/fi";
 import logo from "../../assets/ahiia_icon.svg";
 
@@ -51,24 +50,30 @@ const REQUEST_TEXT =
 
 function HowItWorks() {
   return (
-    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
+    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
       <span className="inline-block rounded-full bg-indigo-100 px-4 py-1.5 text-xs sm:text-sm font-medium text-indigo-600">
         How it works
       </span>
 
-      <h2 className="mt-5 text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 leading-tight">
+      <h2 className="mt-4 sm:mt-5 text-[1.75rem] sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-900 leading-tight">
         Four steps from context to
         <br className="hidden sm:block" /> finished document
       </h2>
 
-      <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-8 text-left">
+      <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-x-5 sm:gap-y-8 text-left">
         {STEPS.map((step) => (
-          <div key={step.id}>
-            <div className="h-0.5 w-10 bg-[#007498] mb-4" />
-            <div className="text-xs font-semibold tracking-wide text-[#007498] mb-2">
-              {step.id}
+          <div
+            key={step.id}
+            className="rounded-2xl bg-slate-50/80 sm:bg-transparent p-4 sm:p-0 border border-slate-200/70 sm:border-0"
+          >
+            <div className="flex items-center justify-between sm:block mb-2.5 sm:mb-0">
+              <div className="hidden sm:block h-0.5 w-10 bg-[#007498] mb-4" />
+              <div className="inline-flex sm:block items-center justify-center rounded-lg bg-[#007498]/10 sm:bg-transparent px-2.5 py-1 sm:p-0 text-xs font-bold tracking-wide text-[#007498] sm:mb-2">
+                {step.id}
+              </div>
+              <div className="sm:hidden h-0.5 flex-1 ml-3 bg-gradient-to-r from-[#007498]/40 to-transparent" />
             </div>
-            <h3 className="text-sm sm:text-sm font-bold text-slate-900 mb-2">
+            <h3 className="text-sm font-bold text-slate-900 mb-1.5 sm:mb-2">
               {step.title}
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
@@ -85,7 +90,7 @@ function HowItWorks() {
 /* Animated checklist row (used on both left + right panels)           */
 /* ------------------------------------------------------------------ */
 
-function ChecklistRow({ label, done, delayMs, numbered, index }) {
+function ChecklistRow({ label, delayMs, numbered, index }) {
   const [visible, setVisible] = useState(delayMs === 0);
 
   useEffect(() => {
@@ -108,9 +113,9 @@ function ChecklistRow({ label, done, delayMs, numbered, index }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {numbered ? null : (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 shrink-0">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 shrink-0">
                 <FiCheck size={11} strokeWidth={3} />
               </span>
             )}
@@ -170,30 +175,30 @@ function DocumentWorkspace() {
   const isComplete = progress >= 100;
 
   return (
-    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20">
-      <div className="bg-white shadow-2xl overflow-hidden">
+    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20">
+      <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-2xl overflow-hidden">
         {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-200 px-5 py-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-100/90 px-4 sm:px-5 py-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-white">
               <img src={logo} alt="Logo" className="h-4 w-4" />
             </span>
             Ahiia.AI Document workspace
           </div>
-          <div className="text-xs sm:text-sm text-slate-500">
+          <div className="text-[11px] sm:text-sm text-slate-500">
             Kanto Logistics Ltd. · Business context active
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-5 sm:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 p-4 sm:p-8">
           {/* Left: request + generation status */}
           <div key={`left-${runId}`}>
-            <p className="text-xs font-semibold tracking-wide text-slate-500 mb-3">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 mb-2.5 sm:mb-3">
               Your request
             </p>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-gray-50 px-2 py-2 shadow-xs">
-              <p className="flex-1 text-sm text-slate-800 font-medium">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-gray-50 px-3 py-2.5 shadow-xs">
+              <p className="flex-1 text-xs sm:text-sm text-slate-800 font-medium leading-snug">
                 {REQUEST_TEXT}
               </p>
               <button
@@ -206,7 +211,7 @@ function DocumentWorkspace() {
               </button>
             </div>
 
-            <p className="mt-3 text-xs text-slate-500 leading-relaxed">
+            <p className="mt-2.5 sm:mt-3 text-xs text-slate-500 leading-relaxed">
               Ahiia reads this alongside your company profile, brand kit and
               business rules.
             </p>
@@ -253,24 +258,24 @@ function DocumentWorkspace() {
 
           {/* Right: generated document preview */}
           <div key={`right-${runId}`} className="flex flex-col">
-            <p className="text-xs font-semibold tracking-wide text-slate-500 mb-3">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 mb-2.5 sm:mb-3">
               Generated document
             </p>
 
-            <div className="flex flex-1 flex-col shadow-2xl overflow-hidden rounded-bl-2xl rounded-br-2xl">
-              <div className="bg-slate-900 px-5 py-5 text-white">
-                <p className="text-[11px] uppercase tracking-wide text-slate-400 mb-2">
+            <div className="flex flex-1 flex-col shadow-xl border border-slate-200/70 overflow-hidden rounded-2xl">
+              <div className="bg-slate-900 px-4 sm:px-5 py-4 sm:py-5 text-white">
+                <p className="text-[11px] uppercase tracking-wide text-slate-400 mb-1.5 sm:mb-2">
                   Proposal
                 </p>
-                <h3 className="text-lg sm:text-xl font-semibold leading-snug">
+                <h3 className="text-base sm:text-xl font-semibold leading-snug">
                   Solar Installation Project
                 </h3>
-                <p className="mt-1 text-sm text-indigo-300 font-medium">
+                <p className="mt-1 text-xs sm:text-sm text-indigo-300 font-medium">
                   ₦50M Project Value
                 </p>
               </div>
 
-              <div className="bg-white px-5 py-5 space-y-4">
+              <div className="bg-white px-4 sm:px-5 py-4 sm:py-5 space-y-3.5 sm:space-y-4">
                 {SECTIONS.map((label, i) => (
                   <ChecklistRow
                     key={label}
@@ -285,7 +290,7 @@ function DocumentWorkspace() {
             </div>
 
             {/* Actions */}
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 sm:mt-5 space-y-2.5 sm:space-y-3">
               <button
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -295,10 +300,10 @@ function DocumentWorkspace() {
                 Review Document
               </button>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!isComplete}
                 >
                   <FiDownload size={14} />
@@ -306,7 +311,7 @@ function DocumentWorkspace() {
                 </button>
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!isComplete}
                 >
                   <FiDownload size={14} />
@@ -327,7 +332,7 @@ function DocumentWorkspace() {
 
 const AhiiaWorkspace = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       <HowItWorks />
       <DocumentWorkspace />
     </div>
