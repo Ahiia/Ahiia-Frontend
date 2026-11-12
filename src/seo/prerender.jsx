@@ -5,6 +5,8 @@ import Home from "../landing/pages/Home.jsx";
 import About from "../landing/pages/About.jsx";
 import Contact from "../landing/pages/Contact.jsx";
 import Pricing from "../landing/pages/Pricing.jsx";
+import TermsOfService from "../landing/pages/TermsOfService.jsx";
+import PrivacyPolicy from "../landing/pages/PrivacyPolicy.jsx";
 
 export function render(path) {
   return renderToString(<StaticRouter location={path}><Routes><Route element={<Landing />}>
@@ -12,5 +14,7 @@ export function render(path) {
     <Route path="/about" element={<About />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/pricing" element={<Pricing />} />
+    <Route path="/terms" element={<TermsOfService />} />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
   </Route></Routes></StaticRouter>);
 }

@@ -4,6 +4,8 @@ import ScrollToTop from "./ScrollToTop";
 import Home from "./landing/pages/Home";
 import About from "./landing/pages/About";
 import Contact from "./landing/pages/Contact";
+import TermsOfService from "./landing/pages/TermsOfService";
+import PrivacyPolicy from "./landing/pages/PrivacyPolicy";
 import Signup from "./landing/auth/Signup";
 import Login from "./landing/auth/Login";
 import Otp from "./landing/auth/Otp";
@@ -99,6 +101,8 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Route>
       </Routes>
     </BrowserRouter>

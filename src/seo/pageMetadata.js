@@ -16,6 +16,14 @@ export const PUBLIC_PAGES = {
     title: "Contact Ahiia.ai | Product Questions & Support",
     description: "Get in touch with Ahiia.ai for product questions and help with company profiles, business document creation, branding and exports.",
   },
+  "/terms": {
+    title: "Terms of Service | Ahiia.ai",
+    description: "Read the AHIIA.AI Terms of Service covering account usage, plans and billing, AI-generated content, intellectual property, and acceptable use.",
+  },
+  "/privacy": {
+    title: "Privacy Policy | Ahiia.ai",
+    description: "Learn how AHIIA.AI collects, uses, and protects your personal and business information under the Nigeria Data Protection Act 2023.",
+  },
 };
 
 export function pageMetadata(pathname) {

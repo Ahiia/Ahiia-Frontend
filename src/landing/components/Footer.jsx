@@ -68,6 +68,12 @@ const Footer = () => {
             <a href="/contact" className="text-sm font-medium text-slate-600 hover:text-indigo-700">
               Contact
             </a>
+            <a href="/terms" className="text-sm font-medium text-slate-600 hover:text-indigo-700">
+              Terms of Service
+            </a>
+            <a href="/privacy" className="text-sm font-medium text-slate-600 hover:text-indigo-700">
+              Privacy Policy
+            </a>
           </nav>
 
           {/* Desktop/Tablet socials */}
@@ -88,9 +94,17 @@ const Footer = () => {
         </div>
 
         {/* bottom bar */}
-        <div className="flex flex-col gap-1.5 border-t border-slate-100 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between text-center sm:text-left">
+        <div className="flex flex-col gap-2 border-t border-slate-100 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between text-center sm:text-left">
           <p>© 2026 Ahiia.Ai. All rights reserved.</p>
-          <p>Built for modern businesses.</p>
+          <div className="flex items-center justify-center gap-4">
+            <a href="/terms" className="hover:text-slate-600 transition-colors">
+              Terms of Service
+            </a>
+            <span>·</span>
+            <a href="/privacy" className="hover:text-slate-600 transition-colors">
+              Privacy Policy
+            </a>
+          </div>
         </div>
       </div>
     </footer>
